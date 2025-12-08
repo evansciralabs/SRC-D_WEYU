@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRC-D WEYU MASTER | Corporate Blue Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- Corporate-Blue / Clean Aesthetic --- */
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Michroma&display=swap');
+        
+        :root {
+            /* WEYU Corporate Blue Aesthetic: White/Dark/Blue */
+            --primary: #1A1A1A; /* Dark Gray/Near Black (Default Text) */
+            --secondary: #000000; /* Pure Black */
+            --electric: #4080FF; /* Soft Electric Blue for accents/glows */
+            --critical: #FF6600; /* High-Visibility Orange for alerts */
+            --light-bg: #FFFFFF; /* Crisp White */
+            --off-white-bg: #F0F0F0; /* Off-White for depth */
+            
+            /* Text glow is now soft Electric Blue */
+            --text-glow-primary: 0 0 8px rgba(64, 128, 255, 0.5), 0 0 15px rgba(64, 128, 255, 0.2);
+            /* Soft 3D shadow/glow for borders */
+            --border-shadow-primary: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 0 5px rgba(64, 128, 255, 0.3);
+            --text-glow-secondary: 0 0 8px rgba(26, 26, 26, 0.8);
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: var(--light-bg); /* White background */
+            color: var(--primary); /* Dark gray text */
+            height: 100vh;
+            overflow: hidden; 
+        }
+
+        /* Utility classes for aesthetic */
+        .neon-blue { color: var(--electric); }
+        .neon-dark { color: var(--secondary); }
+        .bg-white-main { background-color: var(--light-bg); }
+        .bg-off-white { background-color: var(--off-white-bg); }
+        
+        .shadow-border-blue {
+            border: 1px solid var(--off-white-bg);
+            box-shadow: var(--border-shadow-primary);
+        }
+        
+        .glow-text-blue {
+            color: var(--electric); 
+            text-shadow: var(--text-glow-primary);
+        }
+
+        /* Scanline is subtle on a white background, using light gray */
+        .scanline-overlay::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(0, 0, 0, 0.03) 50% /* Very subtle black/gray scanline */
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50; 
+        }
+        
+        /* FAB Fading Effect */
+        #fab-menu-container {
+            transition: opacity 0.3s ease, filter 0.3s ease;
+        }
+        
+        body.modal-open #fab-menu-container {
+            opacity: 0.5; 
+            filter: blur(1px);
+            pointer-events: none; 
+        }
+
+        /* Main Layout */
+        .dashboard-container {
+            height: 100vh;
+            display: flex;
+            transition: all 0.3s ease;
+        }
+
+        .left-pane, .right-pane {
+            height: 100%;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        /* Scrollbar styling for clean look - now Electric Blue */
+        .left-pane::-webkit-scrollbar, .right-pane::-webkit-scrollbar, textarea::-webkit-scrollbar {
+            width: 6px;
+        }
+        .left-pane::-webkit-scrollbar-thumb, .right-pane::-webkit-scrollbar-thumb, textarea::-webkit-scrollbar-thumb {
+            background-color: var(--electric);
+            border-radius: 3px;
+        }
+        .left-pane::-webkit-scrollbar-track, .right-pane::-webkit-scrollbar-track, textarea::-webkit-scrollbar-track {
+            background-color: var(--off-white-bg);
+        }
+
+        /* Mobile specific overrides (same as previous versions) */
+        @media (max-width: 768px) {
+            .left-pane, .right-pane {
+                position: absolute;
+                width: 100%;
+                z-index: 10; 
+            }
+            .dashboard-container.mobile-list-view .left-pane {
+                transform: translateX(0);
+                z-index: 20;
+            }
+            .dashboard-container.mobile-list-view .right-pane {
+                transform: translateX(100%);
+                z-index: 10;
+            }
+            .dashboard-container.mobile-detail-view .left-pane {
+                transform: translateX(-100%);
+                z-index: 10;
+            }
+            .dashboard-container.mobile-detail-view .right-pane {
+                transform: translateX(0);
+                z-index: 20;
+            }
+        }
+
+        /* Input/Button Styling - Subtle blue focus glow */
+        input:focus, textarea:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 5px var(--electric);
+        }
+
+        /* Modal specific style - subtle blue glow */
+        .modal-content {
+            box-shadow: var(--border-shadow-primary);
+        }
+
+        /* Scratchpad textarea specific - text is explicitly dark/electric blue */
+        .scratchpad-textarea {
+            min-height: 400px;
+            font-family: 'Space Mono', monospace;
+            line-height: 1.4;
+            tab-size: 4;
+            color: var(--electric); /* Electric Blue Text */
+            background-color: rgba(255, 255, 255, 0.8); /* White transparent */
+        }
+        /* Raw View textarea specific */
+        #raw-view-textarea {
+            min-height: 400px;
+            font-family: 'Space Mono', monospace;
+            line-height: 1.4;
+            tab-size: 4;
+            color: var(--primary); /* Dark text */
+            background-color: rgba(255, 255, 255, 0.8); 
+        }
+        
+        /* ADR Toast System */
+        #adr-toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            pointer-events: none; 
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .adr-toast {
+            background-color: rgba(240, 240, 240, 0.95); /* Off-White transparent */
+            border-left: 4px solid var(--electric); /* Default: Blue */
+            color: var(--primary); /* Dark Gray */
+            padding: 12px 16px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem;
+            min-width: 250px;
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+        }
+        /* Color correction for toast messages */
+        .adr-toast[data-type="error"] {
+            border-left-color: var(--critical); /* Orange for error */
+        }
+        .adr-toast[data-type="success"] {
+            border-left-color: var(--primary); /* Dark gray/black for success/positive action */
+        }
+    </style>
+</head>
+<body class="scanline-overlay">
+
+    <div id="dashboard-container" class="dashboard-container bg-white-main">
+        
+        <div id="left-pane" class="left-pane w-full md:w-1/3 p-4 border-r-2 border-r-blue-400 shadow-border-blue bg-off-white">
+            <header class="mb-4">
+                <h1 class="text-2xl font-['Michroma'] glow-text-blue">SRC-D WEYU > MASTER</h1>
+            </header>
+
+            <div id="summary" class="mb-6 p-3 bg-white-main rounded-lg shadow-border-blue text-sm">
+                <p class="neon-blue">WYU_V1.0.LOG</p>
+                <div class="flex justify-between mt-2">
+                    <span>PROJECTS: <span id="project-count" class="neon-dark">0</span></span>
+                    <span>INCIDENTS: <span id="incident-count" class="neon-dark">0</span></span>
+                    <span>STATUS: <span id="sync-status" class="neon-dark">OFFLINE/CLIENT</span></span>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-between gap-2 mb-6">
+                <button id="add-project-btn" class="flex-grow p-2 text-xs rounded-lg bg-gray-800 hover:bg-gray-700 shadow-border-blue text-white">
+                    [ + ] NEW PROJECT
+                </button>
+                <button id="add-incident-btn" class="flex-grow p-2 text-xs rounded-lg bg-orange-500 hover:bg-orange-400 shadow-border-blue text-white">
+                    [ + ] NEW INCIDENT
+                </button>
+                <button id="scratchpad-toggle-btn" class="flex-grow p-2 text-xs rounded-lg bg-blue-600 hover:bg-blue-500 shadow-border-blue text-white" title="Ctrl+~">
+                    [ * ] SCRATCHPAD
+                </button>
+            </div>
+            
+            <div class="flex justify-between gap-2 mb-6">
+                <button id="export-data-btn" class="flex-grow p-2 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 shadow-border-blue text-white">
+                    [ < ] EXPORT (.srcd)
+                </button>
+                <button id="import-data-btn" class="flex-grow p-2 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 shadow-border-blue text-white">
+                    [ > ] IMPORT (.srcd / Media)
+                </button>
+                <input type="file" id="import-file-input" class="hidden" accept=".srcd">
+            </div>
+
+            <h2 class="text-xl neon-blue mt-6 mb-3 font-['Michroma']">PROJECTS [P]</h2>
+            <div id="project-list" class="space-y-2 mb-8">
+                </div>
+
+            <h2 class="text-xl text-orange-500 mt-6 mb-3 font-['Michroma']">INCIDENTS [I]</h2>
+            <div id="incident-list" class="space-y-2">
+                </div>
+        </div>
+
+        <div id="right-pane" class="right-pane w-full md:w-2/3 p-4 bg-white-main">
+            <div id="detail-view" class="h-full">
+                <div id="detail-empty" class="h-full flex flex-col justify-center items-center text-center p-8">
+                    <span class="text-6xl mb-4 neon-blue opacity-50 font-['Michroma']">SRC-D V1.0</span>
+                    <p class="text-lg neon-blue">SELECT AN ENTRY OR INITIATE NEW PROTOCOL.</p>
+                    <p class="text-sm mt-2 opacity-70">DATA PERSISTENCE: LOCAL CACHE</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scratchpad-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-off-white p-6 w-11/12 md:w-3/4 h-5/6 rounded-lg shadow-border-blue flex flex-col">
+            <h2 class="text-2xl font-['Michroma'] neon-blue mb-4">SCRATCHPAD > EPHEMERAL CONTEXT ENGINE</h2>
+            
+            <div id="scratchpad-tabs" class="flex border-b border-gray-400 mb-4">
+                <button data-tab="main" class="scratchpad-tab-btn p-2 text-sm font-bold border-r border-gray-400 active-tab">MAIN</button>
+                <button data-tab="snippet" class="scratchpad-tab-btn p-2 text-sm font-bold border-r border-gray-400 opacity-70 hover:opacity-100 text-gray-800">SNIPPET/AI</button>
+                <button data-tab="vip" class="scratchpad-tab-btn p-2 text-sm font-bold border-r border-gray-400 opacity-70 hover:opacity-100 text-gray-800">VIP_CONTEXT</button>
+                <span class="flex-grow"></span>
+            </div>
+
+            <div id="scratchpad-content-container" class="flex-grow relative mb-4">
+                
+                <textarea id="scratchpad-main" data-tab="main" class="scratchpad-textarea w-full h-full p-3 text-sm rounded-lg resize-none border-2 border-dashed border-blue-500/50" placeholder="Type large-scale thoughts, drafts, or inline HTML code here..."></textarea>
+                
+                <textarea id="scratchpad-snippet" data-tab="snippet" class="scratchpad-textarea w-full h-full p-3 text-sm rounded-lg resize-none border-2 border-dashed border-gray-500/50 absolute top-0 left-0 hidden" placeholder="Paste and sort AI chats, code snippets, or long documentation here."></textarea>
+                
+                <textarea id="scratchpad-vip" data-tab="vip" class="scratchpad-textarea w-full h-full p-3 text-sm rounded-lg resize-none border-2 border-dashed border-blue-500/50 absolute top-0 left-0 hidden" placeholder="Reserved space for mission-critical context or polished responses."></textarea>
+                
+                <span class="absolute top-2 right-2 text-xs opacity-50 neon-dark">Autosaved to SessionStorage.</span>
+            </div>
+            
+            <div class="flex justify-end space-x-2">
+                <button id="scratchpad-preview-btn" class="py-0.5 px-2 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 shadow-border-blue text-white">[ </> ] PREVIEW HTML</button>
+                <button id="scratchpad-export-btn" class="py-0.5 px-2 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 shadow-border-blue text-white">[ < ] SAVE AS .srcd</button>
+                <button id="scratchpad-clear-btn" class="py-0.5 px-2 text-xs rounded-lg bg-orange-500 hover:bg-orange-400 shadow-border-blue text-white">[ X ] CLEAR CONTEXT</button>
+                <button id="scratchpad-close-btn" class="py-0.5 px-2 text-xs rounded-lg bg-blue-600 hover:bg-blue-500 shadow-border-blue text-white">[ > ] CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="preview-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-off-white p-4 w-11/12 md:w-3/4 h-5/6 rounded-lg shadow-border-blue flex flex-col">
+            <h2 class="text-xl font-['Michroma'] neon-blue mb-2 border-b border-gray-400 pb-1">PREVIEW > SANDBOX INJECTION</h2>
+            <iframe id="preview-iframe" sandbox="allow-scripts allow-forms allow-same-origin" class="flex-grow w-full border-2 border-blue-500/50 bg-gray-900"></iframe>
+            <button id="preview-close-btn" class="mt-4 p-2 text-xs rounded-lg bg-blue-600 hover:bg-blue-500 shadow-border-blue text-white">[ > ] CLOSE PREVIEW</button>
+        </div>
+    </div>
+
+    <div id="notification-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-20 backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-white-main p-6 w-96 rounded-lg border border-gray-300 shadow-xl shadow-gray-400/30">
+            <h3 id="notification-title" class="text-lg font-bold mb-3 text-blue-500">INFO</h3>
+            <p id="notification-message" class="text-sm mb-4"></p>
+            <div id="notification-actions" class="flex justify-end space-x-2">
+                <button id="notification-cancel" class="hidden p-2 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 text-white">CANCEL</button>
+                <button id="notification-confirm" class="p-2 text-xs rounded-lg bg-orange-500 hover:bg-orange-400 shadow-border-blue text-white">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="data-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm transition-opacity">
+        <form id="data-form" class="modal-content bg-off-white p-6 w-11/12 md:w-1/2 rounded-lg shadow-border-blue flex flex-col">
+            <h2 id="data-modal-title" class="text-2xl font-['Michroma'] neon-blue mb-4">NEW ENTRY > PROJECT</h2>
+            <input type="hidden" id="data-id" name="id">
+            <input type="hidden" id="data-type" name="type">
+
+            <label for="data-title" class="neon-dark text-xs mb-1">TITLE (REQUIRED):</label>
+            <input type="text" id="data-title" name="title" required class="w-full mb-3 p-2 bg-white-main border border-blue-400 rounded-lg text-sm text-primary">
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="data-status" class="neon-dark text-xs mb-1">STATUS (REQUIRED FOR INCIDENT):</label>
+                    <select id="data-status" name="status" class="w-full mb-3 p-2 bg-white-main border border-gray-400 rounded-lg text-sm text-primary">
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Archived">Archived</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="data-due-date" class="neon-dark text-xs mb-1">DUE DATE (YYYY-MM-DD):</label>
+                    <input type="date" id="data-due-date" name="dueDate" class="w-full mb-3 p-2 bg-white-main border border-blue-400 rounded-lg text-sm text-primary">
+                </div>
+            </div>
+            
+            <div id="incident-fields" class="hidden grid grid-cols-2 gap-3">
+                <div>
+                    <label for="data-category" class="text-orange-500 text-xs mb-1">INCIDENT CATEGORY (REQUIRED):</label>
+                    <select id="data-category" name="category" required class="w-full mb-3 p-2 bg-white-main border border-orange-400 rounded-lg text-sm text-primary">
+                        <option value="">-- Select Category --</option>
+                        <option value="Legal">Legal</option>
+                        <option value="Cyber">Cyber</option>
+                        <option value="Security">Security</option>
+                        <option value="Terrestrial">Terrestrial</option>
+                        <option value="Logistics">Logistics</option>
+                        <option value="Financial">Financial</option>
+                        <option value="Personnel">Personnel</option>
+                        <option value="R&D">R&D</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="data-owner" class="neon-dark text-xs mb-1">OWNER/CONTACT:</label>
+                    <input type="text" id="data-owner" name="owner" class="w-full mb-3 p-2 bg-white-main border border-gray-400 rounded-lg text-sm text-primary" placeholder="Entity or Contact Name">
+                </div>
+                <div class="col-span-2">
+                    <label for="data-number" class="neon-dark text-xs mb-1">INCIDENT NUMBER:</label>
+                    <input type="text" id="data-number" name="number" class="w-full mb-3 p-2 bg-white-main border border-gray-400 rounded-lg text-sm text-primary" placeholder="Case Number / ID">
+                </div>
+            </div>
+            
+            <label for="data-notes" class="neon-dark text-xs mb-1">NOTES/SUMMARY:</label>
+            <textarea id="data-notes" name="notes" rows="6" class="w-full mb-4 p-2 bg-white-main border border-blue-400 rounded-lg text-sm text-primary"></textarea>
+
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="data-cancel-btn" class="p-2 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 text-white">[ X ] CANCEL</button>
+                <button type="submit" class="p-2 text-xs rounded-lg bg-blue-600 hover:bg-blue-500 shadow-border-blue text-white">[ ✓ ] SAVE ENTRY</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="import-options-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-20 backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-white-main p-6 w-96 rounded-lg border border-gray-300 shadow-xl shadow-gray-400/30">
+            <h3 class="text-lg font-bold mb-3 neon-blue">DATA IMPORT MODE</h3>
+            <p class="text-sm mb-4">Select how to process the imported **.srcd** file:</p>
+            <div class="flex flex-col space-y-3">
+                <button id="import-mode-overwrite" class="p-3 text-xs rounded-lg bg-orange-500 hover:bg-orange-400 shadow-border-blue border-orange-400 text-white">OVERWRITE: ERASE CURRENT DATA<
