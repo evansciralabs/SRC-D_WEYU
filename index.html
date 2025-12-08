@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRC-D WEYU MASTER | Critical Red Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- Cyber-Console / Matrix Aesthetic --- */
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Michroma&display=swap');
+        
+        :root {
+            /* WEYU Critical Red Aesthetic: Silver/Black/Red */
+            --primary: #E0E0E0; /* Silver/Near White (Previously Green) */
+            --secondary: #FFFFFF; /* Pure White */
+            --critical: #FF3333; /* Bright Red for accents/alerts */
+            --dark-bg: #0A0A0A; /* Deep Black */
+            --mid-bg: #1F1F1F; /* Dark Gray for depth */
+            
+            /* Text glow is now Critical Red */
+            --text-glow-primary: 0 0 10px rgba(255, 51, 51, 0.8), 0 0 20px rgba(255, 51, 51, 0.4);
+            /* Border glow is now Critical Red */
+            --border-glow-primary: 0 0 8px rgba(255, 51, 51, 1), inset 0 0 8px rgba(255, 51, 51, 0.6);
+            --text-glow-secondary: 0 0 8px rgba(224, 224, 224, 0.8);
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: var(--dark-bg);
+            color: var(--primary); /* Silver is the default text color */
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        /* Utility classes for aesthetic */
+        .neon-red { color: var(--critical); }
+        .neon-white { color: var(--secondary); }
+        .bg-dark-black { background-color: var(--dark-bg); }
+        .bg-mid-gray { background-color: var(--mid-bg); }
+        
+        .glow-border-red {
+            border: 1px solid var(--critical);
+            box-shadow: var(--border-glow-primary);
+        }
+        
+        .glow-text-red {
+            color: var(--critical); /* Ensure header text is red */
+            text-shadow: var(--text-glow-primary);
+        }
+
+        .scanline-overlay::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(255, 51, 51, 0.05) 50% /* Subtle red scanline */
+            );
+            background-size: 100% 4px; /* Adjust line density */
+            pointer-events: none;
+            z-index: 50; /* Above everything but modals */
+        }
+        
+        /* FAB Fading Effect (The "Mist") */
+        #fab-menu-container {
+            transition: opacity 0.3s ease, filter 0.3s ease;
+        }
+        
+        body.modal-open #fab-menu-container {
+            opacity: 0.2; /* Fade like mist */
+            filter: blur(1.5px) grayscale(50%);
+            pointer-events: none; /* Make it unclickable while a modal is open */
+        }
+
+        /* Main Layout */
+        .dashboard-container {
+            height: 100vh;
+            display: flex;
+            transition: all 0.3s ease;
+        }
+
+        .left-pane, .right-pane {
+            height: 100%;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        /* Scrollbar styling for console look - now Red */
+        .left-pane::-webkit-scrollbar, .right-pane::-webkit-scrollbar, textarea::-webkit-scrollbar {
+            width: 6px;
+        }
+        .left-pane::-webkit-scrollbar-thumb, .right-pane::-webkit-scrollbar-thumb, textarea::-webkit-scrollbar-thumb {
+            background-color: var(--critical);
+            border-radius: 3px;
+            box-shadow: 0 0 5px var(--critical);
+        }
+        .left-pane::-webkit-scrollbar-track, .right-pane::-webkit-scrollbar-track, textarea::-webkit-scrollbar-track {
+            background-color: var(--mid-bg);
+        }
+
+        /* Mobile specific overrides */
+        @media (max-width: 768px) {
+            .left-pane, .right-pane {
+                position: absolute;
+                width: 100%;
+                z-index: 10; 
+            }
+            .dashboard-container.mobile-list-view .left-pane {
+                transform: translateX(0);
+                z-index: 20;
+            }
+            .dashboard-container.mobile-list-view .right-pane {
+                transform: translateX(100%);
+                z-index: 10;
+            }
+            .dashboard-container.mobile-detail-view .left-pane {
+                transform: translateX(-100%);
+                z-index: 10;
+            }
+            .dashboard-container.mobile-detail-view .right-pane {
+                transform: translateX(0);
+                z-index: 20;
+            }
+        }
+
+        /* Input/Button Styling */
+        input:focus, textarea:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 5px var(--critical);
+        }
+
+        /* Modal specific style */
+        .modal-content {
+            box-shadow: var(--border-glow-primary);
+        }
+
+        /* Scratchpad textarea specific - text is explicitly red */
+        .scratchpad-textarea {
+            min-height: 400px;
+            font-family: 'Space Mono', monospace;
+            line-height: 1.4;
+            tab-size: 4;
+            color: var(--critical); /* Critical Red Text */
+            background-color: rgba(31, 31, 31, 0.8); /* Mid-gray transparent */
+        }
+        /* Raw View textarea specific */
+        #raw-view-textarea {
+            min-height: 400px;
+            font-family: 'Space Mono', monospace;
+            line-height: 1.4;
+            tab-size: 4;
+            color: var(--secondary); /* Pure White text */
+            background-color: rgba(31, 31, 31, 0.8); /* Mid-gray transparent background */
+        }
+        
+        /* ADR Toast System */
+        #adr-toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            pointer-events: none; 
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .adr-toast {
+            background-color: rgba(31, 31, 31, 0.95); /* Mid-gray transparent */
+            border-left: 4px solid var(--critical); /* Default: Red */
+            color: var(--primary); /* Silver */
+            padding: 12px 16px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.85rem;
+            min-width: 250px;
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="scanline-overlay">
+
+    <div id="dashboard-container" class="dashboard-container bg-dark-black">
+        
+        <div id="left-pane" class="left-pane w-full md:w-1/3 p-4 border-r-2 border-r-red-500 glow-border-red">
+            <header class="mb-4">
+                <h1 class="text-2xl font-['Michroma'] glow-text-red">SRC-D WEYU > MASTER</h1>
+            </header>
+
+            <div id="summary" class="mb-6 p-3 bg-mid-gray rounded-lg glow-border-red text-sm">
+                <p class="neon-red">WYU_V1.0.LOG</p>
+                <div class="flex justify-between mt-2">
+                    <span>PROJECTS: <span id="project-count" class="neon-white">0</span></span>
+                    <span>INCIDENTS: <span id="incident-count" class="neon-white">0</span></span>
+                    <span>STATUS: <span id="sync-status" class="neon-white">OFFLINE/CLIENT</span></span>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-between gap-2 mb-6">
+                <button id="add-project-btn" class="flex-grow p-2 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 glow-border-red text-white">
+                    [ + ] NEW PROJECT
+                </button>
+                <button id="add-incident-btn" class="flex-grow p-2 text-xs rounded-lg bg-red-800 hover:bg-red-700 glow-border-red text-white">
+                    [ + ] NEW INCIDENT
+                </button>
+                <button id="scratchpad-toggle-btn" class="flex-grow p-2 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 glow-border-red text-white" title="Ctrl+~">
+                    [ * ] SCRATCHPAD
+                </button>
+            </div>
+            
+            <div class="flex justify-between gap-2 mb-6">
+                <button id="export-data-btn" class="flex-grow p-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 glow-border-red text-white">
+                    [ < ] EXPORT (.srcd)
+                </button>
+                <button id="import-data-btn" class="flex-grow p-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 glow-border-red text-white">
+                    [ > ] IMPORT (.srcd / Media)
+                </button>
+                <input type="file" id="import-file-input" class="hidden" accept=".srcd">
+            </div>
+
+            <h2 class="text-xl neon-white mt-6 mb-3 font-['Michroma']">PROJECTS [P]</h2>
+            <div id="project-list" class="space-y-2 mb-8">
+                </div>
+
+            <h2 class="text-xl neon-red mt-6 mb-3 font-['Michroma']">INCIDENTS [I]</h2>
+            <div id="incident-list" class="space-y-2">
+                </div>
+        </div>
+
+        <div id="right-pane" class="right-pane w-full md:w-2/3 p-4">
+            <div id="detail-view" class="h-full">
+                <div id="detail-empty" class="h-full flex flex-col justify-center items-center text-center p-8">
+                    <span class="text-6xl mb-4 neon-red opacity-50 font-['Michroma']">SRC-D V1.0</span>
+                    <p class="text-lg neon-red">SELECT AN ENTRY OR INITIATE NEW PROTOCOL.</p>
+                    <p class="text-sm mt-2 opacity-70">DATA PERSISTENCE: LOCAL CACHE</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="scratchpad-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-dark-black p-6 w-11/12 md:w-3/4 h-5/6 rounded-lg glow-border-red flex flex-col">
+            <h2 class="text-2xl font-['Michroma'] neon-red mb-4">SCRATCHPAD > EPHEMERAL CONTEXT ENGINE</h2>
+            
+            <div id="scratchpad-tabs" class="flex border-b border-red-500 mb-4">
+                <button data-tab="main" class="scratchpad-tab-btn p-2 text-sm font-bold border-r border-red-500 active-tab">MAIN</button>
+                <button data-tab="snippet" class="scratchpad-tab-btn p-2 text-sm font-bold border-r border-red-500 opacity-70 hover:opacity-100 text-white">SNIPPET/AI</button>
+                <button data-tab="vip" class="scratchpad-tab-btn p-2 text-sm font-bold border-r border-red-500 opacity-70 hover:opacity-100 text-white">VIP_CONTEXT</button>
+                <span class="flex-grow"></span>
+            </div>
+
+            <div id="scratchpad-content-container" class="flex-grow relative mb-4">
+                
+                <textarea id="scratchpad-main" data-tab="main" class="scratchpad-textarea w-full h-full p-3 text-sm rounded-lg resize-none border-2 border-dashed border-red-500/50" placeholder="Type large-scale thoughts, drafts, or inline HTML code here..."></textarea>
+                
+                <textarea id="scratchpad-snippet" data-tab="snippet" class="scratchpad-textarea w-full h-full p-3 text-sm rounded-lg resize-none border-2 border-dashed border-white/50 absolute top-0 left-0 hidden" placeholder="Paste and sort AI chats, code snippets, or long documentation here."></textarea>
+                
+                <textarea id="scratchpad-vip" data-tab="vip" class="scratchpad-textarea w-full h-full p-3 text-sm rounded-lg resize-none border-2 border-dashed border-red-500/50 absolute top-0 left-0 hidden" placeholder="Reserved space for mission-critical context or polished responses."></textarea>
+                
+                <span class="absolute top-2 right-2 text-xs opacity-50 neon-white">Autosaved to SessionStorage.</span>
+            </div>
+            
+            <div class="flex justify-end space-x-2">
+                <button id="scratchpad-preview-btn" class="py-0.5 px-2 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 glow-border-red text-white">[ </> ] PREVIEW HTML</button>
+                <button id="scratchpad-export-btn" class="py-0.5 px-2 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 glow-border-red text-white">[ < ] SAVE AS .srcd</button>
+                <button id="scratchpad-clear-btn" class="py-0.5 px-2 text-xs rounded-lg bg-red-700 hover:bg-red-600 glow-border-red text-white">[ X ] CLEAR CONTEXT</button>
+                <button id="scratchpad-close-btn" class="py-0.5 px-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 glow-border-red text-white">[ > ] CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="preview-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-dark-black p-4 w-11/12 md:w-3/4 h-5/6 rounded-lg glow-border-red flex flex-col">
+            <h2 class="text-xl font-['Michroma'] neon-red mb-2 border-b border-red-500 pb-1">PREVIEW > SANDBOX INJECTION</h2>
+            <iframe id="preview-iframe" sandbox="allow-scripts allow-forms allow-same-origin" class="flex-grow w-full border-2 border-white/50 bg-white"></iframe>
+            <button id="preview-close-btn" class="mt-4 p-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 glow-border-red text-white">[ > ] CLOSE PREVIEW</button>
+        </div>
+    </div>
+
+    <div id="notification-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-mid-gray p-6 w-96 rounded-lg border border-red-500 shadow-xl shadow-red-500/30">
+            <h3 id="notification-title" class="text-lg font-bold mb-3 text-red-400">ALERT</h3>
+            <p id="notification-message" class="text-sm mb-4"></p>
+            <div id="notification-actions" class="flex justify-end space-x-2">
+                <button id="notification-cancel" class="hidden p-2 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white">CANCEL</button>
+                <button id="notification-confirm" class="p-2 text-xs rounded-lg bg-red-700 hover:bg-red-600 text-white">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="data-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm transition-opacity">
+        <form id="data-form" class="modal-content bg-dark-black p-6 w-11/12 md:w-1/2 rounded-lg glow-border-red flex flex-col">
+            <h2 id="data-modal-title" class="text-2xl font-['Michroma'] neon-red mb-4">NEW ENTRY > PROJECT</h2>
+            <input type="hidden" id="data-id" name="id">
+            <input type="hidden" id="data-type" name="type">
+
+            <label for="data-title" class="neon-white text-xs mb-1">TITLE (REQUIRED):</label>
+            <input type="text" id="data-title" name="title" required class="w-full mb-3 p-2 bg-mid-gray border border-red-500 rounded-lg text-sm">
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="data-status" class="neon-white text-xs mb-1">STATUS (REQUIRED FOR INCIDENT):</label>
+                    <select id="data-status" name="status" class="w-full mb-3 p-2 bg-mid-gray border border-white rounded-lg text-sm">
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Resolved">Resolved</option>
+                        <option value="Archived">Archived</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="data-due-date" class="neon-white text-xs mb-1">DUE DATE (YYYY-MM-DD):</label>
+                    <input type="date" id="data-due-date" name="dueDate" class="w-full mb-3 p-2 bg-mid-gray border border-red-500 rounded-lg text-sm">
+                </div>
+            </div>
+            
+            <div id="incident-fields" class="hidden grid grid-cols-2 gap-3">
+                <div>
+                    <label for="data-category" class="neon-red text-xs mb-1">INCIDENT CATEGORY (REQUIRED):</label>
+                    <select id="data-category" name="category" required class="w-full mb-3 p-2 bg-mid-gray border border-red-500 rounded-lg text-sm">
+                        <option value="">-- Select Category --</option>
+                        <option value="Legal">Legal</option>
+                        <option value="Cyber">Cyber</option>
+                        <option value="Security">Security</option>
+                        <option value="Terrestrial">Terrestrial</option>
+                        <option value="Logistics">Logistics</option>
+                        <option value="Financial">Financial</option>
+                        <option value="Personnel">Personnel</option>
+                        <option value="R&D">R&D</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="data-owner" class="neon-white text-xs mb-1">OWNER/CONTACT:</label>
+                    <input type="text" id="data-owner" name="owner" class="w-full mb-3 p-2 bg-mid-gray border border-white rounded-lg text-sm" placeholder="Entity or Contact Name">
+                </div>
+                <div class="col-span-2">
+                    <label for="data-number" class="neon-white text-xs mb-1">INCIDENT NUMBER:</label>
+                    <input type="text" id="data-number" name="number" class="w-full mb-3 p-2 bg-mid-gray border border-white rounded-lg text-sm" placeholder="Case Number / ID">
+                </div>
+            </div>
+            
+            <label for="data-notes" class="neon-white text-xs mb-1">NOTES/SUMMARY:</label>
+            <textarea id="data-notes" name="notes" rows="6" class="w-full mb-4 p-2 bg-mid-gray border border-red-500 rounded-lg text-sm"></textarea>
+
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="data-cancel-btn" class="p-2 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white">[ X ] CANCEL</button>
+                <button type="submit" class="p-2 text-xs rounded-lg bg-red-700 hover:bg-red-600 glow-border-red text-white">[ ✓ ] SAVE ENTRY</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="import-options-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-mid-gray p-6 w-96 rounded-lg border border-red-500 shadow-xl shadow-red-500/30">
+            <h3 class="text-lg font-bold mb-3 neon-red">DATA IMPORT MODE</h3>
+            <p class="text-sm mb-4">Select how to process the imported **.srcd** file:</p>
+            <div class="flex flex-col space-y-3">
+                <button id="import-mode-overwrite" class="p-3 text-xs rounded-lg bg-red-700 hover:bg-red-600 glow-border-red border-red-500 text-white">OVERWRITE: ERASE CURRENT DATA</button>
+                <button id="import-mode-merge" class="p-3 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 glow-border-red border-red-500 text-white">MERGE: ADD NEW, UPDATE DUPLICATES</button>
+                <button id="import-mode-cancel" class="p-2 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white">CANCEL</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="attachment-label-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm transition-opacity">
+        <form id="attachment-label-form" class="modal-content bg-mid-gray p-6 w-96 rounded-lg border border-red-500 shadow-xl shadow-red-500/30">
+            <h3 class="text-lg font-bold mb-3 neon-red">ATTACHMENT CONTEXT</h3>
+            <p class="text-sm mb-4">Provide a short label for the attached file (used for tooltip):</p>
+            <input type="text" id="attachment-label-input" required class="w-full mb-4 p-2 bg-dark-black border border-red-500 rounded-lg text-sm" placeholder="e.g., 'Initial Threat Report' or 'Q3 Budget'">
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="attachment-label-cancel" class="p-2 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white">CANCEL</button>
+                <button type="submit" class="p-2 text-xs rounded-lg bg-red-700 hover:bg-red-600 glow-border-red text-white">ATTACH &amp; SAVE</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="attachment-edit-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm transition-opacity">
+        <form id="attachment-edit-form" class="modal-content bg-mid-gray p-6 w-96 rounded-lg border border-red-500 shadow-xl shadow-red-500/30">
+            <h3 class="text-lg font-bold mb-3 neon-red">EDIT ATTACHMENT CONTEXT</h3>
+            <p class="text-sm mb-4">Update the label for this attachment (used for tooltip and sorting):</p>
+            <input type="hidden" id="edit-item-id">
+            <input type="hidden" id="edit-item-type">
+            <input type="hidden" id="edit-att-index">
+            <label for="attachment-edit-label-input" class="neon-white text-xs mb-1">LABEL:</label>
+            <input type="text" id="attachment-edit-label-input" required class="w-full mb-4 p-2 bg-dark-black border border-red-500 rounded-lg text-sm" placeholder="e.g., 'Initial Threat Report'">
+            <div class="flex justify-end space-x-2">
+                <button type="button" id="attachment-edit-cancel" class="p-2 text-xs rounded-lg bg-slate-700 hover:bg-slate-600 text-white">CANCEL</button>
+                <button type="submit" class="p-2 text-xs rounded-lg bg-red-700 hover:bg-red-600 glow-border-red text-white">SAVE LABEL</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="raw-view-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm transition-opacity">
+        <div class="modal-content bg-dark-black p-6 w-11/12 md:w-3/4 h-5/6 rounded-lg glow-border-red flex flex-col">
+            <h2 id="raw-view-title" class="text-2xl font-['Michroma'] neon-red mb-4">RAW DATA > SCRATCHPAD CONTENT</h2>
+            <div class="flex-grow relative mb-4 overflow-y-auto">
+                <div id="media-view-area" class="w-full h-full p-3 bg-mid-gray rounded-lg text-sm flex items-center justify-center hidden">
+                    </div>
+                <textarea id="raw-view-textarea" class="w-full h-full p-3 text-sm rounded-lg resize-none border-2 border-dashed border-white/50" readonly></textarea>
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button id="raw-view-close-btn" class="p-2 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 glow-border-red text-white">[ > ] CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="fab-menu-container" class="fab-menu-container fixed bottom-4 right-4 z-40">
+        <div id="fab-actions" class="flex flex-col items-end space-y-2 mb-2 hidden">
+            <button id="fab-scratchpad-btn" class="w-10 h-10 rounded-full bg-slate-600 text-white text-lg flex items-center justify-center shadow-lg glow-border-red" title="Scratchpad Main (Ctrl+~)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="neon-red"><path d="M8 2.5V18.5"/><path d="M16 2.5V18.5"/><path d="M22 20.5H2"/><path d="M15 20.5H9"/><path d="M12 20.5v-16"/></svg>
+            </button>
+            <button id="fab-notes-btn" class="w-10 h-10 rounded-full bg-slate-600 text-white text-lg flex items-center justify-center shadow-lg glow-border-red" title="Show Details">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="neon-white"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+            </button>
+            <button id="fab-list-btn" class="w-10 h-10 rounded-full bg-slate-600 text-white text-lg flex items-center justify-center shadow-lg glow-border-red" title="Show List">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="neon-white"><line x1="12" x2="19" y1="12" y2="12"/><line x1="12" x2="19" y1="6" y2="6"/><line x1="12" x2="19" y1="18" y2="18"/><path d="M6 12h.01"/><path d="M6 18h.01"/><path d="M6 6h.01"/></svg>
+            </button>
+        </div>
+        <button id="fab-main-btn" class="w-14 h-14 rounded-full bg-red-700 text-white text-3xl flex items-center justify-center shadow-xl glow-border-red font-['Michroma']">
+            WY
+        </button>
+    </div>
+    
+    <div id="adr-toast-container"></div>
+
+    <script>
+        // --- NAMESPACE MODIFICATION START (WEYU MASTER) ---
+        const generateId = () => Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+        
+        // UNIQUE NAMESPACE FOR THIS INSTANCE
+        const APP_NAMESPACE = '_WYU_'; // WEYU Master
+
+        // IndexedDB name is now unique (e.g., _WYU_DataBridgeDB)
+        const DB_NAME = APP_NAMESPACE + 'DataBridgeDB';
+        const DB_VERSION = 1;
+        const OBJECT_STORE_NAME = 'Attachments'; 
+
+        // LocalStorage keys are now unique (e.g., _WYU_srcd_projects)
+        const STORAGE_KEYS = {
+            PROJECTS: APP_NAMESPACE + 'srcd_projects',
+            INCIDENTS: APP_NAMESPACE + 'srcd_incidents',
+            SCRATCHPAD: APP_NAMESPACE + 'srcd_scratchpad_v2' 
+        };
+        // --- NAMESPACE MODIFICATION END ---
+
+
+        let db;
+
+        /** Initializes and opens the IndexedDB database. */
+        const openDatabase = () => {
+            return new Promise((resolve, reject) => {
+                if (!window.indexedDB) {
+                    reject(new Error("IndexedDB not supported."));
+                    return;
+                }
+
+                // Uses the unique DB_NAME
+                const request = indexedDB.open(DB_NAME, DB_VERSION); 
+
+                request.onerror = (event) => {
+                    console.error("IndexedDB error:", event.target.error);
+                    reject(event.target.error);
+                };
+
+                request.onsuccess = (event) => {
+                    db = event.target.result;
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    db.createObjectStore(OBJECT_STORE_NAME, { keyPath: 'id' });
+                };
+            });
+        };
+
+        /**
+         * Saves an attachment Blob to IndexedDB.
+         */
+        const saveAttachmentBlob = (id, blob) => {
+            return new Promise(async (resolve, reject) => {
+                if (!db) {
+                    try {
+                        await openDatabase();
+                    } catch (e) {
+                        return reject(e);
+                    }
+                }
+                
+                const transaction = db.transaction([OBJECT_STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(OBJECT_STORE_NAME);
+                
+                const data = { id: id, blob: blob };
+                const request = store.put(data); 
+
+                request.onsuccess = () => resolve(true);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        };
+
+        /**
+         * Retrieves an attachment Blob from IndexedDB.
+         */
+        const getAttachmentBlob = (id) => {
+            return new Promise(async (resolve, reject) => {
+                if (!db) {
+                    try {
+                        await openDatabase();
+                    } catch (e) {
+                        return reject(e);
+                    }
+                }
+                
+                const transaction = db.transaction([OBJECT_STORE_NAME], 'readonly');
+                const store = transaction.objectStore(OBJECT_STORE_NAME);
+                
+                const request = store.get(id);
+
+                request.onsuccess = (event) => {
+                    resolve(event.target.result ? event.target.result.blob : undefined);
+                };
+                request.onerror = (event) => reject(event.target.error);
+            });
+        };
+
+        /**
+         * Deletes an attachment Blob from IndexedDB.
+         */
+        const deleteAttachmentBlob = (id) => {
+            return new Promise(async (resolve, reject) => {
+                if (!db) {
+                    try {
+                        await openDatabase();
+                    } catch (e) {
+                        return reject(e);
+                    }
+                }
+                
+                const transaction = db.transaction([OBJECT_STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(OBJECT_STORE_NAME);
+                
+                const request = store.delete(id); 
+
+                request.onsuccess = () => resolve(true);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        };
+
+
+        let currentState = {
+            projects: [],
+            incidents: [],
+            selectedItem: null, 
+            isMobile: window.innerWidth <= 768,
+            attachmentContext: null, 
+            attachmentFileContent: null, 
+            activeObjectURLs: [], 
+            activeScratchpadTab: 'main', 
+        };
+        
+        // --- Core Utility for FAB and Modals ---
+        const setModalOpen = (isOpen) => {
+            document.body.classList.toggle('modal-open', isOpen);
+        };
+
+        // --- Persistence Utilities (Use namespaced keys) ---
+
+        const getFromLocalStorage = (key) => {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.error("Error reading from localStorage:", e);
+                return [];
+            }
+        };
+
+        const saveToLocalStorage = (key, data) => {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error("Error writing to localStorage:", e);
+            }
+        };
+
+        const getScratchpadFromSessionStorage = () => {
+            try {
+                // Uses the unique WYU namespaced SCRATCHPAD key
+                const data = sessionStorage.getItem(STORAGE_KEYS.SCRATCHPAD);
+                const defaultPad = { main: '', snippet: '', vip: '' };
+                if (!data) return defaultPad;
+                
+                const parsed = JSON.parse(data);
+                return { ...defaultPad, ...parsed };
+
+            } catch (e) {
+                const oldContent = sessionStorage.getItem('srcd_scratchpad');
+                return { main: oldContent || '', snippet: '', vip: '' };
+            }
+        };
+
+        const saveScratchpadToSessionStorage = (data) => {
+            try {
+                // Uses the unique WYU namespaced SCRATCHPAD key
+                sessionStorage.setItem(STORAGE_KEYS.SCRATCHPAD, JSON.stringify(data));
+            } catch (e) {
+                console.error("Error writing scratchpad to SessionStorage:", e);
+            }
+        };
+
+        // --- Custom Sort Extraction Utilities ---
+
+        const extractSortableNumber = (label) => {
+            if (!label) return null;
+            const matches = label.match(/\d+/g);
+            
+            if (matches && matches.length > 0) {
+                const largestNumber = matches.reduce((max, numStr) => {
+                    const num = parseInt(numStr, 10);
+                    return num > max ? num : max;
+                }, 0); 
+                return largestNumber;
+            }
+            return null;
+        };
+
+        const extractDateFromLabel = (label) => {
+            if (!label) return null;
+            let match = label.match(/(\d{4}[-./]\d{1,2}[-./]\d{1,2})/);
+            if (match) {
+                const parts = match[0].split(/[-./]/).map(p => p.padStart(2, '0'));
+                if (parts.length === 3) {
+                    return `${parts[0]}-${parts[1]}-${parts[2]}`;
+                }
+            }
+            match = label.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})/);
+            if (match) {
+                const dateObj = new Date(match[0]);
+                if (!isNaN(dateObj)) {
+                    return dateObj.toISOString().split('T')[0];
+                }
+            }
+            return null;
+        };
+
+        const getPrimarySortValue = (item) => {
+            let highestNumber = null;
+            let latestDate = item.createdAt || '1970-01-01'; 
+
+            (item.attachments || []).forEach(att => {
+                const extractedNumber = extractSortableNumber(att.label);
+                if (extractedNumber !== null) {
+                    if (highestNumber === null || extractedNumber > highestNumber) {
+                        highestNumber = extractedNumber;
+                    }
+                }
+                
+                const extractedDate = extractDateFromLabel(att.label);
+                if (extractedDate) {
+                    if (extractedDate > latestDate) {
+                        latestDate = extractedDate;
+                    }
+                }
+            });
+
+            if (highestNumber !== null) {
+                return { type: 'number', value: String(highestNumber).padStart(10, '0') };
+            }
+
+            return { type: 'date', value: latestDate };
+        };
+
+
+        // --- UI Element References ---
+        const $ = (selector) => document.querySelector(selector);
+        const $$ = (selector) => document.querySelectorAll(selector);
+
+        const DOMElements = {
+            dashboardContainer: $('#dashboard-container'),
+            leftPane: $('#left-pane'),
+            rightPane: $('#right-pane'),
+            projectList: $('#project-list'),
+            incidentList: $('#incident-list'),
+            projectCount: $('#project-count'),
+            incidentCount: $('#incident-count'),
+            syncStatus: $('#sync-status'),
+            detailView: $('#detail-view'),
+            detailEmpty: $('#detail-empty'),
+
+            // Modals
+            dataModal: $('#data-modal'),
+            dataForm: $('#data-form'),
+            dataModalTitle: $('#data-modal-title'),
+            incidentFields: $('#incident-fields'),
+            
+            // --- NEW WYU FIELD REFERENCES ---
+            dataCategory: $('#data-category'), // New selector
+            // --- END NEW WYU FIELDS ---
+
+            scratchpadModal: $('#scratchpad-modal'),
+            scratchpadTabsContainer: $('#scratchpad-tabs'),
+            scratchpadTabs: $$('.scratchpad-tab-btn'),
+            scratchpadMain: $('#scratchpad-main'),
+            scratchpadSnippet: $('#scratchpad-snippet'),
+            scratchpadVip: $('#scratchpad-vip'),
+            scratchpadTextareas: $$('.scratchpad-textarea'),
+
+            previewModal: $('#preview-modal'),
+            previewIframe: $('#preview-iframe'),
+            notificationModal: $('#notification-modal'),
+            notificationTitle: $('#notification-title'),
+            notificationMessage: $('#notification-message'),
+            notificationCancel: $('#notification-cancel'),
+            notificationConfirm: $('#notification-confirm'),
+            importOptionsModal: $('#import-options-modal'),
+            importFileInput: $('#import-file-input'),
+
+            attachmentLabelModal: $('#attachment-label-modal'),
+            attachmentLabelForm: $('#attachment-label-form'),
+            attachmentLabelInput: $('#attachment-label-input'),
+            attachmentLabelCancel: $('#attachment-label-cancel'),
+            attachmentEditModal: $('#attachment-edit-modal'),
+            attachmentEditForm: $('#attachment-edit-form'),
+            attachmentEditInput: $('#attachment-edit-label-input'),
+            rawViewModal: $('#raw-view-modal'),
+            rawViewTitle: $('#raw-view-title'),
+            rawViewTextarea: $('#raw-view-textarea'),
+            mediaViewArea: $('#media-view-area'),
+            rawViewCloseBtn: $('#raw-view-close-btn'),
+
+            // FAB Menu (Mobile)
+            fabMenuContainer: $('#fab-menu-container'),
+            fabMainBtn: $('#fab-main-btn'),
+            fabActions: $('#fab-actions'),
+            fabListBtn: $('#fab-list-btn'),
+            fabNotesBtn: $('#fab-notes-btn'),
+            fabScratchpadBtn: $('#fab-scratchpad-btn'), 
+
+            // Buttons
+            addProjectBtn: $('#add-project-btn'),
+            addIncidentBtn: $('#add-incident-btn'),
+            scratchpadToggleBtn: $('#scratchpad-toggle-btn'),
+            exportDataBtn: $('#export-data-btn'),
+            importDataBtn: $('#import-data-btn'),
+
+            // Scratchpad Action Buttons
+            scratchpadPreviewBtn: $('#scratchpad-preview-btn'),
+            scratchpadExportBtn: $('#scratchpad-export-btn'),
+            scratchpadClearBtn: $('#scratchpad-clear-btn'),
+            scratchpadCloseBtn: $('#scratchpad-close-btn'),
+        };
+
+        // --- ADR & PSP BACK-END INJECTIONS ---
+
+        const AppConstants = {
+            ADR_TIMEOUT: 2500 
+        };
+
+        const showToast = (message, type = 'info', timeout = AppConstants.ADR_TIMEOUT) => {
+            const container = document.getElementById('adr-toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'adr-toast';
+            toast.innerHTML = message; 
+            
+            // Customize border color based on status (Silver/Red)
+            if (type === 'success') {
+                toast.style.borderLeftColor = 'var(--primary)'; // Silver
+            } else if (type === 'error') {
+                toast.style.borderLeftColor = 'var(--critical)'; // Red
+            } else {
+                toast.style.borderLeftColor = 'var(--critical)'; // Red (Default to accent)
+            }
+
+            container.appendChild(toast);
+
+            void toast.offsetWidth; 
+            toast.style.opacity = 1;
+            
+            setTimeout(() => {
+                toast.style.opacity = 0;
+                setTimeout(() => toast.remove(), 500); 
+            }, timeout);
+        };
+
+        /** Generates a local time timestamp string. */
+        const generateLocalTimestampFilename = () => {
+            const now = new Date();
+            const pad = (num) => num.toString().padStart(2, '0');
+
+            const year = now.getFullYear();
+            const month = pad(now.getMonth() + 1); 
+            const day = pad(now.getDate());
+            const hours = pad(now.getHours());
+            const minutes = pad(now.getMinutes());
+            const seconds = pad(now.getSeconds());
+
+            return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+        };
+
+
+        /** Exports all data. */
+        const handleFullExport = () => {
+            const scratchpadData = getScratchpadFromSessionStorage();
+
+            const data = {
+                projects: currentState.projects,
+                incidents: currentState.incidents,
+                scratchpad: scratchpadData, 
+                // PREFIX: WYU (WEYU)
+                appId: 'WYU_V1_RED', 
+                exportTimestamp: new Date().toISOString(),
+            };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            // PREFIX: WYU (WEYU)
+            const timestamp = generateLocalTimestampFilename();
+            const filename = `WYU_RED_${timestamp}.srcd`;
+            
+            a.download = filename; 
+            a.href = url;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast(`Full data exported as **${filename}** file successfully.`, 'success');
+        };
+
+        /** Exports ONLY the content of the active scratchpad tab. */
+        const handleScratchpadExport = () => {
+            const activeTabKey = currentState.activeScratchpadTab;
+            const textarea = $(`#scratchpad-${activeTabKey}`);
+            const content = textarea.value;
+
+            if (!content.trim()) {
+                return showToast(`Cannot export: ${activeTabKey.toUpperCase()} Scratchpad is empty.`, 'info');
+            }
+            
+            let prefix = 'SP'; 
+            if (activeTabKey === 'snippet') {
+                prefix = 'SNPT'; 
+            } else if (activeTabKey === 'vip') {
+                prefix = 'VIP'; 
+            }
+            
+            const data = {
+                scratchpad: { [activeTabKey]: content },
+                appId: `SCRATCHPAD_${prefix}`,
+                exportTimestamp: new Date().toISOString(),
+            };
+
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            const timestamp = generateLocalTimestampFilename();
+            const filename = `${prefix}_${timestamp}.srcd`; 
+            
+            a.download = filename;
+            a.href = url;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast(`${activeTabKey.toUpperCase()} context exported as **${filename}** file successfully.`, 'success', 3500);
+        };
+
+        /** Clears ONLY the content of the active scratchpad tab. */
+        const handleScratchpadClear = () => {
+            const activeTabKey = currentState.activeScratchpadTab;
+            const textarea = $(`#scratchpad-${activeTabKey}`);
+            
+            if (!textarea.value.trim()) {
+                return showToast(`${activeTabKey.toUpperCase()} Scratchpad is already empty.`, 'info');
+            }
+
+            confirmAction(`Are you sure you want to clear all text from the **${activeTabKey.toUpperCase()}** Scratchpad? This cannot be undone.`, 'CONFIRM CLEAR CONTEXT', () => {
+                textarea.value = '';
+                const currentPads = getScratchpadFromSessionStorage();
+                currentPads[activeTabKey] = '';
+                saveScratchpadToSessionStorage(currentPads); 
+
+                showToast(`${activeTabKey.toUpperCase()} context cleared.`, 'error');
+            });
+        };
+        
+        /** Renders the content of the active scratchpad tab inside the preview iframe. */
+        const handleScratchpadPreview = () => {
+            const activeTabKey = currentState.activeScratchpadTab;
+            const content = $(`#scratchpad-${activeTabKey}`).value.trim();
+
+            if (!content) {
+                return showToast(`Cannot preview: ${activeTabKey.toUpperCase()} Scratchpad is empty.`, 'info');
+            }
+            
+            const isFullHtml = content.toLowerCase().includes('<html');
+
+            let htmlContent = content;
+
+            if (!isFullHtml) {
+                // Wrap content with WEYU Red/Black aesthetic
+                htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Preview Sandbox</title>
+                        <style>
+                            body { 
+                                background-color: #0A0A0A; /* dark-bg */
+                                color: #FF3333; /* critical/red */
+                                font-family: 'Space Mono', monospace;
+                                padding: 20px;
+                                line-height: 1.5;
+                            }
+                            h1, h2, h3 { color: #FFFFFF; /* secondary/white */ text-shadow: 0 0 5px rgba(255, 255, 255, 0.6); }
+                            pre, code { 
+                                background-color: #1F1F1F; /* mid-bg */ 
+                                border: 1px dashed #FF3333;
+                                color: #E0E0E0;
+                                padding: 5px; 
+                                display: block;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${content}
+                    </body>
+                    </html>
+                `;
+            }
+
+            setModalOpen(true); 
+            const iframeDoc = DOMElements.previewIframe.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(htmlContent); 
+            iframeDoc.close();
+            
+            DOMElements.previewModal.classList.remove('hidden');
+        };
+
+
+        // --- ORIGINAL SRC-D FUNCTIONS ---
+
+        /** Revokes all active Object URLs to prevent memory leaks. */
+        const revokeActiveURLs = () => {
+            currentState.activeObjectURLs.forEach(url => URL.revokeObjectURL(url));
+            currentState.activeObjectURLs = [];
+        };
+
+        /** Confirmation modal. */
+        const confirmAction = (message, title, callback) => {
+            setModalOpen(true); 
+            
+            DOMElements.notificationTitle.textContent = title;
+            DOMElements.notificationMessage.innerHTML = message;
+            
+            if (callback) {
+                DOMElements.notificationCancel.classList.remove('hidden');
+                DOMElements.notificationConfirm.textContent = 'CONFIRM';
+                
+                DOMElements.notificationConfirm.onclick = null;
+                DOMElements.notificationCancel.onclick = null;
+
+                DOMElements.notificationConfirm.onclick = () => {
+                    DOMElements.notificationModal.classList.add('hidden');
+                    setModalOpen(false); 
+                    callback();
+                };
+                DOMElements.notificationCancel.onclick = () => {
+                    DOMElements.notificationModal.classList.add('hidden');
+                    setModalOpen(false); 
+                };
+
+            } else {
+                DOMElements.notificationCancel.classList.add('hidden');
+                DOMElements.notificationConfirm.textContent = 'OK';
+                
+                DOMElements.notificationConfirm.onclick = () => {
+                    DOMElements.notificationModal.classList.add('hidden');
+                    setModalOpen(false); 
+                };
+            }
+
+            // Styling for errors/critical actions (Red border)
+            const modalContent = DOMElements.notificationModal.querySelector('.modal-content');
+            if (title.includes('ERROR') || title.includes('FAILURE') || title.includes('DELETION') || title.includes('CLEAR CONTEXT')) {
+                modalContent.classList.remove('border-red-500'); // Ensure it starts clean if the previous one was green
+                modalContent.classList.add('border-red-500', 'shadow-red-500/30');
+                DOMElements.notificationTitle.classList.remove('text-silver');
+                DOMElements.notificationTitle.classList.add('text-red-400');
+            } else {
+                modalContent.classList.remove('border-red-500', 'shadow-red-500/30');
+                modalContent.classList.add('border-red-500'); // Use Red as the primary accent color
+                DOMElements.notificationTitle.classList.remove('text-red-400');
+                DOMElements.notificationTitle.classList.add('text-white');
+            }
+            
+            DOMElements.notificationModal.classList.remove('hidden');
+        };
+
+        /** Renders the project or incident lists. */
+        const renderList = (listElement, data, type) => {
+            listElement.innerHTML = ''; 
+            data.sort((a, b) => {
+                if (type === 'incident') {
+                    const sortA = getPrimarySortValue(a);
+                    const sortB = getPrimarySortValue(b);
+
+                    if (sortA.type === 'number' && sortB.type === 'number') {
+                        return sortB.value.localeCompare(sortA.value);
+                    }
+                    if (sortA.type === 'number' && sortB.type === 'date') {
+                        return -1; 
+                    }
+                    if (sortA.type === 'date' && sortB.type === 'number') {
+                        return 1; 
+                    }
+                    return sortB.value.localeCompare(sortA.value);
+                } else {
+                    const dateA = a.dueDate || '9999-12-31'; 
+                    const dateB = b.dueDate || '9999-12-31';
+                    return dateA.localeCompare(dateB);
+                }
+            });
+            data.forEach(item => {
+                const itemDiv = document.createElement('div');
+                // Border color updated to Red (Incidents) or White (Projects)
+                itemDiv.className = `p-3 bg-mid-gray rounded-lg cursor-pointer hover:bg-slate-700 transition duration-150 border-l-4 ${type === 'project' ? 'border-white' : 'border-red-500'} flex justify-between items-center text-sm`;
+                itemDiv.dataset.id = item.id;
+                itemDiv.dataset.type = type;
+
+                let badgeColor = 'bg-gray-800';
+                if (type === 'incident') {
+                    if (item.status === 'Active') badgeColor = 'bg-red-800';
+                    else if (item.status === 'Resolved') badgeColor = 'bg-white text-black'; // Resolved is high visibility
+                    
+                    // Display category if available (Red for Incident Category)
+                    const categoryTag = item.category ? `<span class="px-2 py-0.5 text-xs rounded-full bg-slate-600 text-red-400 ml-1">${item.category.toUpperCase()}</span>` : '';
+
+                    itemDiv.innerHTML = `
+                        <div class="truncate pr-4 flex-grow">
+                            <span class="font-bold mr-2 text-white">${item.title}</span>
+                            ${categoryTag}
+                            ${item.status ? `<span class="px-2 py-0.5 text-xs rounded-full ${badgeColor} text-white">${item.status.toUpperCase()}</span>` : ''}
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs flex-shrink-0">
+                            <button class="edit-btn text-gray-400 hover:text-white" data-id="${item.id}" data-type="${type}" title="Edit Entry">[ ⋊ ]</button>
+                            <button class="delete-btn text-red-400 hover:text-red-200" data-id="${item.id}" data-type="${type}" title="Delete Entry">[ ⟁ ]</button>
+                        </div>
+                    `;
+                } else {
+                     itemDiv.innerHTML = `
+                        <div class="truncate pr-4 flex-grow">
+                            <span class="font-bold mr-2 text-white">${item.title}</span>
+                            ${item.status ? `<span class="px-2 py-0.5 text-xs rounded-full ${badgeColor} text-white">${item.status.toUpperCase()}</span>` : ''}
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs flex-shrink-0">
+                            <button class="edit-btn text-gray-400 hover:text-white" data-id="${item.id}" data-type="${type}" title="Edit Entry">[ ⋊ ]</button>
+                            <button class="delete-btn text-red-400 hover:text-red-200" data-id="${item.id}" data-type="${type}" title="Delete Entry">[ ⟁ ]</button>
+                        </div>
+                    `;
+                }
+                listElement.appendChild(itemDiv);
+            });
+            
+            
+            DOMElements.projectCount.textContent = currentState.projects.length;
+            DOMElements.incidentCount.textContent = currentState.incidents.length;
+
+            $$('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openDataModal(e.target.dataset.type, e.target.dataset.id)));
+            $$('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => deleteItem(e.target.dataset.id, e.target.dataset.type)));
+            
+            $$(`#${listElement.id} > div`).forEach(div => div.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    selectItem(div.dataset.id, div.dataset.type);
+                }
+            }));
+        };
+
+        /** Renders the detail view for a selected project or incident. */
+        const renderDetail = (id, type) => {
+            const list = type === 'project' ? currentState.projects : currentState.incidents;
+            const item = list.find(i => i.id === id);
+
+            if (!item) {
+                return showToast(`Error: Item ${id} not found in ${type} registry.`, 'error');
+            }
+
+            currentState.selectedItem = { id, type };
+
+            const fields = [];
+            fields.push({ label: 'TYPE', value: type.toUpperCase(), color: type === 'incident' ? 'text-red-400' : 'text-white' });
+            // NEW: Incident Category (Red)
+            if (item.category) fields.push({ label: 'CATEGORY', value: item.category, color: 'text-red-400' });
+            if (item.number) fields.push({ label: 'INCIDENT NUMBER', value: item.number });
+            if (item.owner) fields.push({ label: 'OWNER/CONTACT', value: item.owner });
+            // Status color updated to Red (for Active incidents) or White/Silver
+            fields.push({ label: 'STATUS', value: item.status || 'N/A', color: item.status === 'Active' ? 'text-red-400' : (item.status === 'Resolved' ? 'text-white' : 'text-gray-400') });
+            if (item.dueDate) fields.push({ label: 'TARGET DATE', value: item.dueDate });
+
+            // --- ATTACHMENTS RENDERING ---
+            const attachmentsHtml = (item.attachments || []).map((att, index) => {
+                const isViewable = att.content || att.id;
+                const filenameDisplay = att.filename;
+                
+                // View button color updated to White
+                const viewButton = isViewable 
+                    ? `<button data-item-id="${item.id}" data-item-type="${type}" data-att-index="${index}" 
+                              class="view-att-btn text-white hover:text-gray-300 ml-2 text-xs" title="View Attachment">
+                              [ ⊛ ]
+                       </button>` 
+                    : '<span class="text-red-400 ml-2 text-xs" title="Missing Data">[ ⟁ ]</span>'; 
+                
+                const actionButtons = `
+                    <button data-item-id="${item.id}" data-item-type="${type}" data-att-index="${index}" 
+                            class="edit-att-label-btn text-gray-400 hover:text-white ml-1 text-xs" 
+                            title="Edit Label">
+                            [ ⋊ ]
+                    </button>
+                    <button data-item-id="${item.id}" data-item-type="${type}" data-att-index="${index}" 
+                            class="delete-att-btn text-red-400 hover:text-red-200 ml-1 text-xs" 
+                            title="Delete Attachment">
+                            [ ⟁ ]
+                    </button>
+                `;
+                
+                return `
+                    <div class="attachment-row flex justify-between items-center border-b border-gray-700 py-1 text-sm">
+                        <span title="${att.label}" class="text-gray-400 truncate w-5/12 text-left">${att.label}</span>
+                        
+                        <span class="text-gray-500 text-xs truncate text-center flex-grow mx-2">${filenameDisplay}</span>
+                        
+                        <div class="flex items-center space-x-0 ml-auto flex-shrink-0">
+                            ${viewButton}
+                            ${actionButtons}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            // --- END ATTACHMENTS RENDERING ---
+
+
+            DOMElements.detailView.innerHTML = `
+                <div class="h-full flex flex-col">
+                    <div class="flex justify-between items-start mb-4 border-b border-red-500 pb-2">
+                        <h2 class="text-3xl font-['Michroma'] ${type === 'incident' ? 'neon-red' : 'neon-white'} pr-4">${item.title}</h2>
+                        
+                        <div class="flex space-x-2 mt-1 flex-shrink-0"> 
+                            <button class="edit-btn p-2 text-xs rounded-lg bg-gray-700 hover:bg-gray-600 glow-border-red text-white" 
+                                    data-id="${item.id}" data-type="${type}" title="Edit Entry">
+                                [ ⋊ ]
+                            </button>
+                            <button class="delete-btn p-2 text-xs rounded-lg bg-red-700 hover:bg-red-600 glow-border-red text-white" 
+                                    data-id="${item.id}" data-type="${type}" title="Delete Entry">
+                                [ ⟁ ]
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        ${fields.map(f => `
+                            <div class="p-3 bg-mid-gray rounded-lg border-l-2 border-red-500">
+                                <p class="text-xs text-gray-400">${f.label}</p>
+                                <p class="text-sm font-bold ${f.color || 'text-primary'}">${f.value}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="flex-grow mb-6 overflow-y-auto p-3 bg-mid-gray rounded-lg glow-border-red">
+                        <h3 class="text-lg neon-white mb-2 border-b border-red-500 pb-1">NOTES/SUMMARY</h3>
+                        <p class="whitespace-pre-wrap text-sm">${item.notes || 'No summary notes recorded.'}</p>
+                    </div>
+
+                    <div class="p-3 bg-mid-gray rounded-lg glow-border-red">
+                        <div class="flex justify-between items-center mb-2 border-b border-white pb-1">
+                            <h3 class="text-lg neon-white">ATTACHMENTS (${item.attachments ? item.attachments.length : 0})</h3>
+                            <button class="attach-btn p-1 text-xs rounded-lg bg-red-700 hover:bg-red-600 glow-border-red text-white" data-id="${item.id}" data-type="${type}">[ + ATTACH ]</button>
+                        </div>
+                        <div id="attachments-list" class="space-y-1 max-h-40 overflow-y-auto">
+                            ${attachmentsHtml || '<p class="text-xs text-gray-500">No attachments found.</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $$('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => openDataModal(e.target.dataset.type, e.target.dataset.id)));
+            $$('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => deleteItem(e.target.dataset.id, e.target.dataset.type)));
+            $$('.attach-btn').forEach(btn => btn.addEventListener('click', (e) => handleAttachAction(e.target.dataset.id, e.target.dataset.type)));
+
+            $$('.view-att-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const { itemId, itemType, attIndex } = e.target.dataset;
+                handleViewAttachment(itemId, itemType, parseInt(attIndex));
+            }));
+            $$('.edit-att-label-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const { itemId, itemType, attIndex } = e.target.dataset;
+                openAttachmentEditModal(itemId, itemType, parseInt(attIndex));
+            }));
+            $$('.delete-att-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const { itemId, itemType, attIndex } = e.target.dataset;
+                handleDeleteAttachment(itemId, itemType, parseInt(attIndex));
+            }));
+
+            if (currentState.isMobile) {
+                setMobileView('detail');
+            }
+        };
+
+        const selectItem = (id, type) => {
+            renderDetail(id, type);
+        };
+
+        /** Deletes an item after confirmation. */
+        const deleteItem = (id, type) => {
+            confirmAction(`Confirm deletion of entry: **${id}** from the **${type.toUpperCase()}** registry. This action cannot be reversed.`, 'CONFIRM DELETION', () => {
+                const key = type === 'project' ? STORAGE_KEYS.PROJECTS : STORAGE_KEYS.INCIDENTS;
+                let list = getFromLocalStorage(key);
+                list = list.filter(item => item.id !== id);
+                saveToLocalStorage(key, list);
+
+                const listElement = type === 'project' ? DOMElements.projectList : DOMElements.incidentList;
+                renderList(listElement, list, type);
+                
+                if (currentState.selectedItem && currentState.selectedItem.id === id) {
+                    DOMElements.detailView.innerHTML = DOMElements.detailEmpty.outerHTML;
+                    currentState.selectedItem = null;
+                }
+                
+                showToast(`Entry ${id} deleted.`, 'error');
+            });
+        };
+
+        /** Opens the modal for adding or editing data. */
+        const openDataModal = (type, id = null) => {
+            setModalOpen(true); 
+            
+            const form = DOMElements.dataForm;
+            const isProject = type === 'project';
+            const isNew = !id;
+
+            form.reset();
+            form['data-id'].value = isNew ? generateId() : id;
+            form['data-type'].value = type;
+            DOMElements.dataModalTitle.textContent = isNew 
+                ? `NEW ENTRY > ${type.toUpperCase()}` 
+                : `EDIT ENTRY > ${type.toUpperCase()}`;
+
+            DOMElements.incidentFields.classList.toggle('hidden', isProject);
+
+            // Hide/Show required state for the new category field
+            DOMElements.dataCategory.required = !isProject;
+            
+            if (!isNew) {
+                const list = isProject ? currentState.projects : currentState.incidents;
+                const item = list.find(i => i.id === id);
+                if (item) {
+                    form['data-title'].value = item.title;
+                    form['data-status'].value = item.status || 'Active';
+                    form['data-due-date'].value = item.dueDate || '';
+                    form['data-notes'].value = item.notes || '';
+                    if (!isProject) {
+                        form['data-owner'].value = item.owner || '';
+                        form['data-number'].value = item.number || '';
+                        // NEW: Load existing category
+                        form['data-category'].value = item.category || ''; 
+                    }
+                }
+            } else {
+                if (isProject) $('#data-status').value = 'Pending';
+                else $('#data-status').value = 'Active';
+            }
+
+            DOMElements.dataModal.classList.remove('hidden');
+        };
+
+        /** Handles the submission of the data modal form (Save). */
+        const handleDataSubmit = (e) => {
+            e.preventDefault();
+            const form = DOMElements.dataForm;
+            const id = form['data-id'].value;
+            const type = form['data-type'].value;
+            const isNew = !currentState.projects.some(p => p.id === id) && !currentState.incidents.some(i => i.id === id);
+
+            const newItem = {
+                id: id,
+                title: form['data-title'].value,
+                status: form['data-status'].value,
+                dueDate: form['data-due-date'].value,
+                notes: form['data-notes'].value,
+                // Incident-specific
+                owner: form['data-owner'] ? form['data-owner'].value : undefined,
+                number: form['data-number'] ? form['data-number'].value : undefined,
+                // NEW: Incident Category
+                category: form['data-category'] ? form['data-category'].value : undefined, 
+                // Preserve attachments if editing
+                attachments: isNew ? [] : (type === 'project' ? currentState.projects : currentState.incidents).find(i => i.id === id)?.attachments || []
+            };
+
+            const key = type === 'project' ? STORAGE_KEYS.PROJECTS : STORAGE_KEYS.INCIDENTS;
+            let list = getFromLocalStorage(key);
+
+            if (isNew) {
+                newItem.createdAt = new Date().toISOString().split('T')[0]; 
+                newItem.attachments = newItem.attachments || []; 
+                list.push(newItem);
+            } else {
+                list = list.map(item => item.id === id ? { ...item, ...newItem } : item);
+            }
+
+            saveToLocalStorage(key, list);
+
+            DOMElements.dataModal.classList.add('hidden');
+            setModalOpen(false); 
+            
+            const listElement = type === 'project' ? DOMElements.projectList : DOMElements.incidentList;
+            if (type === 'project') currentState.projects = list;
+            else currentState.incidents = list;
+            
+            renderList(listElement, list, type);
+
+            if (!isNew && currentState.selectedItem && currentState.selectedItem.id === id) {
+                renderDetail(id, type);
+            }
+            showToast(`${type.toUpperCase()} ENTRY: Protocol saved.`, 'success');
+        };
+
+        /** Handles the file selection for importing or attaching media. */
+        const handleAttachAction = (id, type) => {
+            currentState.attachmentContext = {
+                id: id,
+                type: type,
+            };
+            currentState.attachmentFileContent = null;
+            
+            DOMElements.importFileInput.click();
+        };
+
+        /** Processes the file after it has been selected by the user. */
+        const handleFileSelected = (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                return showToast('File selection cancelled.', 'info');
+            }
+
+            const { id, type } = currentState.attachmentContext || {};
+            
+            if (!type || (type !== 'global_import' && !id)) {
+                return showToast('Attachment context missing. Please try attaching again.', 'error');
+            }
+            
+            // --- Logic split: .srcd (Import Data) vs. Other files (Attachment) ---
+            if (type === 'global_import') {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+                        if (!importedData.projects || !importedData.incidents) {
+                            throw new Error("Invalid .srcd file structure.");
+                        }
+                        window.importedData = importedData;
+                        setModalOpen(true); 
+                        DOMElements.importOptionsModal.classList.remove('hidden');
+                        
+                    } catch (error) {
+                        showToast(`File Read Error: ${error.message}`, 'error');
+                        window.importedData = null;
+                    }
+                };
+                reader.readAsText(file);
+                
+                e.target.value = '';
+                return;
+            }
+
+            // --- Attachment Logic (Linked to a Project/Incident) ---
+            const uniqueId = `attach-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+            // CASE 1: Attaching a standard file (PNG, PDF, DOCX, etc.)
+            if (!file.name.toLowerCase().endsWith('.srcd')) {
+                saveAttachmentBlob(uniqueId, file)
+                    .then(() => {
+                        currentState.attachmentContext.fileName = file.name;
+                        currentState.attachmentContext.mimeType = file.type;
+                        currentState.attachmentFileContent = uniqueId; 
+
+                        DOMElements.attachmentLabelInput.value = file.name; 
+                        setModalOpen(true); 
+                        DOMElements.attachmentLabelModal.classList.remove('hidden');
+                    })
+                    .catch((error) => {
+                        showToast(`File Save Error: ${error.message}`, 'error');
+                        currentState.attachmentContext = null;
+                        currentState.attachmentFileContent = null;
+                    });
+                
+                e.target.value = ''; 
+                return; 
+            }
+
+            // CASE 2: Attaching a .srcd file (requires reading as text to parse JSON)
+            const reader = new FileReader(); 
+            reader.onload = (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (typeof importedData.scratchpad === 'undefined') {
+                        throw new Error("Attached file is not a valid .srcd format or missing required data.");
+                    }
+                    const contentToStore = importedData.scratchpad.main || importedData.scratchpad.snippet || importedData.scratchpad.vip || JSON.stringify(importedData.scratchpad);
+
+                    currentState.attachmentContext.fileName = file.name;
+                    currentState.attachmentContext.mimeType = 'application/json-srcd';
+                    currentState.attachmentFileContent = contentToStore; 
+
+                    DOMElements.attachmentLabelInput.value = file.name;
+                    setModalOpen(true); 
+                    DOMElements.attachmentLabelModal.classList.remove('hidden');
+                } catch (error) {
+                    showToast(`Attachment File Read Error: ${error.message}`, 'error');
+                    currentState.attachmentContext = null; 
+                    currentState.attachmentFileContent = null;
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ''; 
+        };
+
+
+        /** Handles the submission of the attachment label form. */
+        const handleAttachmentLabelSubmit = (e) => {
+            e.preventDefault();
+            const label = DOMElements.attachmentLabelInput.value;
+            const { id, type, fileName, mimeType } = currentState.attachmentContext;
+
+            if (!id || !type || !fileName || !label || !currentState.attachmentFileContent) {
+                return showToast('Attachment details incomplete.', 'error');
+            }
+
+            const key = type === 'project' ? STORAGE_KEYS.PROJECTS : STORAGE_KEYS.INCIDENTS;
+            let list = getFromLocalStorage(key);
+
+            const newAttachment = {
+                filename: fileName,
+                label: label,
+                timestamp: new Date().toISOString(),
+            };
+
+            const isIndexedDBAttachment = typeof currentState.attachmentFileContent === 'string' && currentState.attachmentFileContent.startsWith('attach-');
+
+            if (isIndexedDBAttachment) {
+                newAttachment.id = currentState.attachmentFileContent; 
+                newAttachment.mimeType = mimeType;
+            } else {
+                newAttachment.content = currentState.attachmentFileContent;
+            }
+
+            list = list.map(item => {
+                if (item.id === id) {
+                    const attachments = item.attachments || [];
+                    attachments.push(newAttachment);
+                    return { ...item, attachments: attachments };
+                }
+                return item;
+            });
+
+            saveToLocalStorage(key, list);
+            DOMElements.attachmentLabelModal.classList.add('hidden');
+            setModalOpen(false); 
+            
+            currentState.attachmentContext = null; 
+            currentState.attachmentFileContent = null; 
+
+            if (type === 'project') currentState.projects = list;
+            else currentState.incidents = list;
+            
+            renderDetail(id, type);
+
+            const listElement = type === 'project' ? DOMElements.projectList : DOMElements.incidentList;
+            renderList(listElement, list, type);
+            
+            showToast('ATTACHMENT SAVE: File linked to protocol.', 'success');
+        };
+
+        /** Opens the modal for editing an attachment's label. */
+        const openAttachmentEditModal = (itemId, itemType, attIndex) => {
+            setModalOpen(true); 
+            
+            const list = itemType === 'project' ? currentState.projects : currentState.incidents;
+            const item = list.find(i => i.id === itemId);
+            const attachment = item?.attachments?.[attIndex];
+
+            if (!attachment) {
+                return showToast('Error: Attachment not found for editing.', 'error');
+            }
+
+            DOMElements.attachmentEditForm['edit-item-id'].value = itemId;
+            DOMElements.attachmentEditForm['edit-item-type'].value = itemType;
+            DOMElements.attachmentEditForm['edit-att-index'].value = attIndex;
+            DOMElements.attachmentEditInput.value = attachment.label;
+
+            DOMElements.attachmentEditModal.classList.remove('hidden');
+        };
+
+        /** Handles the submission of the attachment edit form. */
+        const handleEditLabelSubmit = (e) => {
+            e.preventDefault();
+            const form = DOMElements.attachmentEditForm;
+            const itemId = form['edit-item-id'].value;
+            const itemType = form['edit-item-type'].value;
+            const attIndex = parseInt(form['edit-att-index'].value);
+            const newLabel = form['attachment-edit-label-input'].value;
+
+            const key = itemType === 'project' ? STORAGE_KEYS.PROJECTS : STORAGE_KEYS.INCIDENTS;
+            let list = getFromLocalStorage(key);
+
+            list = list.map(item => {
+                if (item.id === itemId && item.attachments && item.attachments[attIndex]) {
+                    item.attachments[attIndex].label = newLabel;
+                    item.attachments[attIndex].timestamp = new Date().toISOString();
+                }
+                return item;
+            });
+
+            saveToLocalStorage(key, list);
+            DOMElements.attachmentEditModal.classList.add('hidden');
+            setModalOpen(false); 
+            
+            if (itemType === 'project') currentState.projects = list;
+            else currentState.incidents = list;
+
+            if (currentState.selectedItem && currentState.selectedItem.id === itemId) {
+                renderDetail(itemId, itemType);
+            }
+
+            const listElement = itemType === 'project' ? DOMElements.projectList : DOMElements.incidentList;
+            renderList(listElement, itemType === 'project' ? currentState.projects : currentState.incidents, itemType);
+            
+            showToast(`Attachment label updated to **${newLabel}**.`, 'info');
+        };
+
+        /** Handles the deletion of an attachment. */
+        const handleDeleteAttachment = (itemId, itemType, attIndex) => {
+            const list = itemType === 'project' ? currentState.projects : currentState.incidents;
+            const item = list.find(i => i.id === itemId);
+            const attachment = item?.attachments?.[attIndex];
+
+            if (!attachment) {
+                return showToast(`Error: Attachment not found for deletion.`, 'error');
+            }
+            const filename = attachment.filename;
+
+            confirmAction(`Confirm deletion of file: **${filename}** (Label: **${attachment.label}**). This action is permanent and will delete the data from the local cache.`, 'CONFIRM DELETION', async () => {
+                // Step 1: Handle IndexedDB Blob deletion if necessary
+                if (attachment.id) {
+                    try {
+                        await deleteAttachmentBlob(attachment.id); 
+                    } catch (error) {
+                        console.error("IndexedDB deletion failed, continuing with list removal:", error);
+                    }
+                }
+
+                // Step 2: Remove the attachment from the item's array in LocalStorage
+                const key = itemType === 'project' ? STORAGE_KEYS.PROJECTS : STORAGE_KEYS.INCIDENTS;
+                let list = getFromLocalStorage(key);
+
+                list = list.map(i => {
+                    if (i.id === itemId) {
+                        const newAttachments = [...(i.attachments || [])];
+                        newAttachments.splice(attIndex, 1);
+                        return { ...i, attachments: newAttachments };
+                    }
+                    return i;
+                });
+
+                // Step 3: Save and refresh
+                saveToLocalStorage(key, list);
+                currentState.projects = itemType === 'project' ? list : currentState.projects;
+                currentState.incidents = itemType === 'incident' ? list : currentState.incidents;
+
+                renderDetail(itemId, itemType);
+
+                const listElement = itemType === 'project' ? DOMElements.projectList : DOMElements.incidentList;
+                renderList(listElement, itemType === 'project' ? currentState.projects : currentState.incidents, itemType);
+
+                showToast(`Attachment ${filename} deleted.`, 'error');
+            });
+        };
+
+        /** Handles the viewing of attachment content (either text or Blob). */
+        const handleViewAttachment = async (id, type, attIndex) => {
+            const list = type === 'project' ? currentState.projects : currentState.incidents;
+            const item = list.find(i => i.id === id);
+
+            if (!item || !item.attachments || !item.attachments[attIndex]) {
+                return showToast(`Error: Attachment content not found or is empty.`, 'error');
+            }
+            const attachment = item.attachments[attIndex];
+
+            revokeActiveURLs();
+            setModalOpen(true); 
+
+            if (attachment.content) {
+                DOMElements.rawViewTitle.textContent = `RAW DATA > ${attachment.filename}`;
+                DOMElements.rawViewTextarea.value = attachment.content;
+                DOMElements.rawViewTextarea.classList.remove('hidden');
+                DOMElements.mediaViewArea.classList.add('hidden');
+                DOMElements.rawViewModal.classList.remove('hidden');
+            } else if (attachment.id && attachment.mimeType) {
+                DOMElements.rawViewTitle.textContent = `VIEW > ${attachment.filename}`;
+                DOMElements.rawViewTextarea.classList.add('hidden');
+                DOMElements.mediaViewArea.classList.remove('hidden');
+                DOMElements.rawViewModal.classList.remove('hidden');
+                renderAttachment(attachment.id, attachment.mimeType, DOMElements.mediaViewArea, attachment.filename);
+            } else {
+                setModalOpen(false); 
+                return showToast(`Error: Attachment data missing (no content or ID found).`, 'error');
+            }
+        };
+
+        /** Renders a Blob retrieved from IndexedDB into the media view area. */
+        const renderAttachment = async (attachmentId, mimeType, containerElement, filename) => {
+            // Text color updated to Red
+            containerElement.innerHTML = `<span class="neon-red animate-pulse">Retrieving Blob...</span>`;
+            const blob = await getAttachmentBlob(attachmentId); 
+
+            if (!blob) {
+                containerElement.innerHTML = `<p class="text-critical">Attachment data not found in local IndexedDB.</p>`;
+                return;
+            }
+
+            const url = URL.createObjectURL(blob);
+            currentState.activeObjectURLs.push(url); 
+
+            if (mimeType.startsWith('image/')) {
+                containerElement.innerHTML = `<img src="${url}" alt="${filename}" class="max-w-full max-h-full object-contain">`;
+            } else if (mimeType.startsWith('audio/') || mimeType.startsWith('video/')) {
+                containerElement.innerHTML = `
+                    <${mimeType.startsWith('audio/') ? 'audio' : 'video'} controls src="${url}" class="max-w-full max-h-full">
+                        Your browser does not support the ${mimeType.split('/')[0]} audio/video tag.
+                    </${mimeType.startsWith('audio/') ? 'audio' : 'video'}>
+                `;
+            } else if (mimeType === 'application/pdf') {
+                containerElement.innerHTML = `
+                    <iframe src="${url}" class="w-full h-full border-none" title="${filename} Preview"></iframe>
+                `;
+            } else if (mimeType.includes('text/') || mimeType.includes('json') || mimeType.includes('xml')) {
+                // Text link updated to Silver
+                containerElement.innerHTML = `<p class="text-xs text-gray-500">File type not directly displayable. Open in new tab:</p><a href="${url}" target="_blank" class="text-primary text-sm">${filename}</a>`;
+            } else {
+                // Text link updated to Silver
+                containerElement.innerHTML = `<p class="text-xs text-gray-500">Binary file type not displayable. Download to view:</p><a href="${url}" download="${filename}" class="text-primary text-sm">${filename}</a>`;
+            }
+        };
+
+        /** Handles the global import process (select mode modal). */
+        const handleImportFile = () => {
+            currentState.attachmentContext = {
+                id: null,
+                type: 'global_import',
+            };
+            currentState.attachmentFileContent = null;
+            
+            DOMElements.importFileInput.click();
+        };
+
+        /** Helper function to perform the upsert (Update or Insert) merge logic by 'id'. */
+        const mergeData = (existingArray, newDataArray) => {
+            const existingMap = new Map(existingArray.map(item => [item.id, item]));
+            let itemsAdded = 0;
+            let itemsUpdated = 0;
+
+            (newDataArray || []).forEach(newItem => {
+                if (existingMap.has(newItem.id)) {
+                    const existingItem = existingMap.get(newItem.id);
+                    Object.assign(existingItem, newItem);
+                    itemsUpdated++;
+                } else {
+                    existingMap.set(newItem.id, newItem);
+                    itemsAdded++;
+                }
+            });
+
+            return { mergedArray: Array.from(existingMap.values()), addedCount: itemsAdded, updatedCount: itemsUpdated };
+        };
+
+        /** Finalizes the import based on the selected mode. */
+        const finalizeImport = (mode) => {
+            const data = window.importedData;
+            DOMElements.importOptionsModal.classList.add('hidden');
+            setModalOpen(false); 
+            
+            let currentProjects = getFromLocalStorage(STORAGE_KEYS.PROJECTS);
+            let currentIncidents = getFromLocalStorage(STORAGE_KEYS.INCIDENTS);
+            let currentScratchpad = getScratchpadFromSessionStorage();
+
+            let finalProjects = [];
+            let finalIncidents = [];
+            let finalScratchpad = {};
+            let projectsAdded = 0;
+            let incidentsAdded = 0;
+            let projectsUpdated = 0;
+            let incidentsUpdated = 0;
+            let successMessage = '';
+
+            if (mode === 'overwrite') {
+                finalProjects = data.projects;
+                finalIncidents = data.incidents;
+                finalScratchpad = data.scratchpad || { main: '', snippet: '', vip: '' };
+
+                projectsAdded = finalProjects.length;
+                incidentsAdded = finalIncidents.length;
+                successMessage = `Import success (OVERWRITE). ${projectsAdded} Projects and ${incidentsAdded} Incidents loaded.`;
+            } else if (mode === 'merge') {
+                const projectResult = mergeData(currentProjects, data.projects);
+                const incidentResult = mergeData(currentIncidents, data.incidents);
+                
+                finalProjects = projectResult.mergedArray;
+                finalIncidents = incidentResult.mergedArray;
+
+                projectsAdded = projectResult.addedCount;
+                incidentsAdded = incidentResult.addedCount;
+                projectsUpdated = projectResult.updatedCount;
+                incidentsUpdated = incidentResult.updatedCount;
+
+                finalScratchpad = { ...currentScratchpad, ...(data.scratchpad || {}) };
+                if (data.scratchpad && (data.scratchpad.main || data.scratchpad.snippet || data.scratchpad.vip)) {
+                    successMessage = `Import success (MERGE). ${projectsAdded + incidentsAdded} entries added, ${projectsUpdated + incidentsUpdated} entries updated. Scratchpad data merged.`;
+                } else {
+                    successMessage = `Import success (MERGE). ${projectsAdded + incidentsUpdated} entries added, ${projectsUpdated + incidentsUpdated} entries updated.`;
+                }
+            }
+
+            saveToLocalStorage(STORAGE_KEYS.PROJECTS, finalProjects);
+            saveToLocalStorage(STORAGE_KEYS.INCIDENTS, finalIncidents);
+            saveScratchpadToSessionStorage(finalScratchpad); 
+            
+            currentState.projects = finalProjects;
+            currentState.incidents = finalIncidents;
+            
+            renderList(DOMElements.projectList, currentState.projects, 'project');
+            renderList(DOMElements.incidentList, currentState.incidents, 'incident');
+
+            DOMElements.detailView.innerHTML = DOMElements.detailEmpty.outerHTML;
+            currentState.selectedItem = null;
+
+            showToast(successMessage, 'success');
+        };
+
+
+        // --- SCRATCHPAD TAB LOGIC ---
+
+        /** Switches the active Scratchpad tab visually and logically. */
+        const switchScratchpadTab = (tabKey) => {
+            currentState.activeScratchpadTab = tabKey;
+
+            DOMElements.scratchpadTabs.forEach(btn => {
+                const isActive = btn.dataset.tab === tabKey;
+                btn.classList.toggle('active-tab', isActive);
+                btn.classList.toggle('opacity-70', !isActive);
+                // Tab color updated to Red for active, Silver for inactive
+                btn.classList.toggle('neon-red', isActive);
+                btn.classList.toggle('text-white', !isActive);
+            });
+            
+            DOMElements.scratchpadTextareas.forEach(textarea => {
+                const isCurrent = textarea.dataset.tab === tabKey;
+                textarea.classList.toggle('hidden', !isCurrent);
+            });
+
+            $(`#scratchpad-${tabKey}`).focus();
+        };
+
+        /** Opens the scratchpad modal and sets the initial tab. */
+        const openScratchpadModal = (initialTab = 'main') => {
+            const pads = getScratchpadFromSessionStorage();
+            DOMElements.scratchpadMain.value = pads.main;
+            DOMElements.scratchpadSnippet.value = pads.snippet;
+            DOMElements.scratchpadVip.value = pads.vip;
+
+            setModalOpen(true); 
+            DOMElements.scratchpadModal.classList.remove('hidden');
+            
+            switchScratchpadTab(initialTab); 
+        };
+
+        /** Attaches event listeners for auto-saving all three textareas. */
+        const setupScratchpadAutosave = () => {
+            DOMElements.scratchpadTextareas.forEach(textarea => {
+                textarea.addEventListener('input', (e) => {
+                    const tabKey = e.target.dataset.tab;
+                    const content = e.target.value;
+                    const currentPads = getScratchpadFromSessionStorage();
+                    
+                    if (currentPads[tabKey] !== content) {
+                         currentPads[tabKey] = content;
+                         saveScratchpadToSessionStorage(currentPads);
+                    }
+                });
+            });
+        };
+
+
+        // --- UI & Mobile View Management ---
+
+        const isMobile = () => window.innerWidth <= 768;
+
+        const setMobileView = (view) => {
+            if (!currentState.isMobile) return; 
+
+            DOMElements.dashboardContainer.classList.remove('mobile-list-view', 'mobile-detail-view');
+            if (view === 'list') {
+                DOMElements.dashboardContainer.classList.add('mobile-list-view');
+                DOMElements.fabMainBtn.textContent = 'WY'; 
+            } else if (view === 'detail') {
+                DOMElements.dashboardContainer.classList.add('mobile-detail-view');
+                DOMElements.fabMainBtn.textContent = 'BACK'; 
+            }
+
+            DOMElements.fabActions.classList.add('hidden');
+        };
+
+        const toggleFabMenu = () => {
+            if (DOMElements.dashboardContainer.classList.contains('mobile-detail-view')) {
+                setMobileView('list');
+                return;
+            }
+
+            DOMElements.fabActions.classList.toggle('hidden');
+        };
+
+        const closeFabMenu = () => DOMElements.fabActions.classList.add('hidden');
+
+        /** Initializes the application state and event listeners. */
+        const initApp = async () => {
+            await openDatabase();
+
+            // 1. Initial Data Load & Render
+            const initialProjects = getFromLocalStorage(STORAGE_KEYS.PROJECTS);
+            const initialIncidents = getFromLocalStorage(STORAGE_KEYS.INCIDENTS);
+            currentState.projects = initialProjects;
+            currentState.incidents = initialIncidents;
+
+            renderList(DOMElements.projectList, initialProjects, 'project');
+            renderList(DOMElements.incidentList, initialIncidents, 'incident');
+            
+            // 2. Set up Event Listeners
+
+            // Data Modal Listeners
+            DOMElements.dataForm.addEventListener('submit', handleDataSubmit);
+            $('#data-cancel-btn').addEventListener('click', () => {
+                DOMElements.dataModal.classList.add('hidden');
+                setModalOpen(false); 
+            });
+
+            // Core Action Buttons
+            DOMElements.addProjectBtn.addEventListener('click', () => openDataModal('project'));
+            DOMElements.addIncidentBtn.addEventListener('click', () => openDataModal('incident'));
+            DOMElements.exportDataBtn.addEventListener('click', handleFullExport); 
+            
+            // Scratchpad Logic
+            DOMElements.scratchpadToggleBtn.addEventListener('click', () => openScratchpadModal('main'));
+            DOMElements.scratchpadCloseBtn.addEventListener('click', () => {
+                DOMElements.scratchpadModal.classList.add('hidden');
+                setModalOpen(false); 
+            });
+
+            DOMElements.scratchpadTabs.forEach(btn => {
+                btn.addEventListener('click', (e) => switchScratchpadTab(e.target.dataset.tab));
+            });
+            
+            setupScratchpadAutosave();
+
+            DOMElements.scratchpadExportBtn.addEventListener('click', handleScratchpadExport);
+            DOMElements.scratchpadClearBtn.addEventListener('click', handleScratchpadClear);
+            
+            // Import/Export Logic
+            DOMElements.importDataBtn.addEventListener('click', handleImportFile);
+            DOMElements.importFileInput.addEventListener('change', handleFileSelected);
+            
+            // Import Options Modal
+            $('#import-mode-overwrite').addEventListener('click', () => finalizeImport('overwrite'));
+            $('#import-mode-merge').addEventListener('click', () => finalizeImport('merge'));
+            $('#import-mode-cancel').addEventListener('click', () => {
+                window.importedData = null;
+                DOMElements.importOptionsModal.classList.add('hidden');
+                setModalOpen(false); 
+                showToast('Import cancelled.', 'info');
+            });
+
+
+            // Preview/Raw View Logic
+            DOMElements.scratchpadPreviewBtn.addEventListener('click', handleScratchpadPreview);
+            
+            $('#preview-close-btn').addEventListener('click', () => {
+                DOMElements.previewModal.classList.add('hidden');
+                setModalOpen(false); 
+            });
+
+            // Attachment Label Listeners
+            DOMElements.attachmentLabelForm.addEventListener('submit', handleAttachmentLabelSubmit);
+            DOMElements.attachmentLabelCancel.addEventListener('click', () => {
+                DOMElements.attachmentLabelModal.classList.add('hidden');
+                setModalOpen(false); 
+                currentState.attachmentContext = null;
+                currentState.attachmentFileContent = null;
+                showToast('Attachment cancelled.', 'info');
+            });
+
+            // Attachment Edit Listeners
+            DOMElements.attachmentEditForm.addEventListener('submit', handleEditLabelSubmit);
+            $('#attachment-edit-cancel').addEventListener('click', () => {
+                DOMElements.attachmentEditModal.classList.add('hidden');
+                setModalOpen(false); 
+            });
+
+            // Raw View Modal Listener
+            DOMElements.rawViewCloseBtn.addEventListener('click', () => {
+                DOMElements.rawViewModal.classList.add('hidden');
+                setModalOpen(false); 
+                revokeActiveURLs();
+            });
+
+            // Window and Mobile Logic
+            currentState.isMobile = isMobile();
+            window.addEventListener('resize', () => {
+                const wasMobile = currentState.isMobile;
+                currentState.isMobile = isMobile();
+                
+                if (!wasMobile && currentState.isMobile) {
+                    setMobileView('list');
+                } else if (wasMobile && !currentState.isMobile) {
+                    DOMElements.dashboardContainer.classList.remove('mobile-list-view', 'mobile-detail-view');
+                }
+            });
+            
+            // FAB Listeners (Mobile Only)
+            DOMElements.fabMainBtn.addEventListener('click', toggleFabMenu);
+            DOMElements.fabListBtn.addEventListener('click', () => setMobileView('list'));
+            DOMElements.fabNotesBtn.addEventListener('click', () => {
+                if (currentState.selectedItem) {
+                    DOMElements.scratchpadModal.classList.add('hidden'); 
+                    setModalOpen(false); 
+                    setMobileView('detail');
+                } else {
+                    showToast('Select a Project or Incident first.', 'info');
+                }
+                closeFabMenu();
+            });
+
+            DOMElements.fabScratchpadBtn.addEventListener('click', () => {
+                openScratchpadModal('main');
+                closeFabMenu();
+            });
+
+
+            // Initial view setup for mobile
+            if (currentState.isMobile) {
+                setMobileView('list'); 
+            }
+        };
+
+        // Start the application after the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
