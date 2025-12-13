@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRC-D WEYU | YULETIDE MASTER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <style>
+        /* --- AESTHETIC --- */
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Michroma&display=swap');
+        
+        :root {
+            --pine: #00FF88; --holly: #FF003C; --gold: #FFD700;
+            --frost: #A5F2F3; --void: #050505; --panel: #0A0F14;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: var(--void); color: var(--frost);
+            height: 100vh; overflow: hidden;
+            background-image: linear-gradient(rgba(0, 20, 10, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 20, 10, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .snow-overlay {
+            position: fixed; inset: 0; pointer-events: none; z-index: 1;
+            background-image: radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+                              radial-gradient(2px 2px at 40px 70px, #fff, transparent);
+            background-size: 200px 200px; opacity: 0.15; animation: snow 8s linear infinite;
+        }
+        @keyframes snow { from { transform: translateY(0); } to { transform: translateY(200px); } }
+
+        /* Typography */
+        .font-header { font-family: 'Michroma', sans-serif; }
+        .neon-green { text-shadow: 0 0 5px rgba(0, 255, 136, 0.5); color: var(--pine); }
+        .neon-red { text-shadow: 0 0 5px rgba(255, 0, 60, 0.5); color: var(--holly); }
+        
+        /* UI */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--pine); border-radius: 2px; }
+        ::-webkit-scrollbar-track { background: var(--panel); }
+
+        .btn-base { transition: 0.2s; text-transform: uppercase; font-weight: bold; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-green { border: 1px solid var(--pine); color: var(--pine); background: rgba(0,255,136,0.1); }
+        .btn-green:hover { background: var(--pine); color: black; box-shadow: 0 0 10px rgba(0, 255, 136, 0.5); }
+        .btn-red { border: 1px solid var(--holly); color: var(--holly); background: rgba(255,0,60,0.1); }
+        .btn-red:hover { background: var(--holly); color: white; box-shadow: 0 0 10px rgba(255, 0, 60, 0.5); }
+        
+        input, select, textarea {
+            background: rgba(0,0,0,0.7); border: 1px solid #333; color: var(--frost);
+            font-family: 'Space Mono', monospace; transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--pine); }
+        
+        /* New Category Select Style for Incidents */
+        #entry-category { 
+            background: rgba(255, 0, 60, 0.1); 
+            border-color: var(--holly); 
+            color: var(--holly);
+        }
+        #entry-category option { background-color: var(--void); color: var(--frost); }
+
+
+        /* Modals */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); z-index: 50; display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: #0B1015; border: 1px solid var(--pine); box-shadow: 0 0 30px rgba(0,255,136,0.15); display: flex; flex-direction: column; overflow: hidden; }
+        
+        .glass-panel { background: rgba(10, 15, 20, 0.95); backdrop-filter: blur(10px); border: 1px solid #333; box-shadow: 0 0 40px rgba(0,0,0,0.8); display: flex; flex-direction: column; }
+        .tab-active { background: linear-gradient(180deg, rgba(0,255,136,0.1) 0%, rgba(0,255,136,0) 100%); border-bottom: 2px solid var(--pine); color: var(--pine); text-shadow: 0 0 5px rgba(0,255,136,0.5); }
+        .tab-inactive { color: #555; border-bottom: 2px solid transparent; }
+
+        /* FAB */
+        .fab-container { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+        .fab-main { width: 56px; height: 56px; border-radius: 50%; background: #050505; border: 2px solid var(--pine); color: var(--pine); font-size: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(0,255,136,0.4); transition: 0.3s; cursor: pointer; }
+        .fab-main:hover { transform: rotate(90deg) scale(1.1); background: var(--pine); color: black; }
+        .fab-menu { opacity: 0; transform: translateY(20px) scale(0.9); pointer-events: none; transition: 0.3s; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+        .fab-container:hover .fab-menu { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+        .fab-item { padding: 8px 16px; background: rgba(10,15,20,0.95); border: 1px solid var(--pine); color: var(--pine); border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; white-space: nowrap; font-family: 'Michroma', sans-serif; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .fab-item:hover { background: var(--pine); color: black; transform: translateX(-4px); }
+        .fab-item.danger { border-color: var(--holly); color: var(--holly); }
+        .fab-item.danger:hover { background: var(--holly); color: white; }
+
+        /* PREDATOR GLYPHS */
+        .glyph-btn { 
+            font-family: 'Michroma', sans-serif; font-size: 16px; 
+            color: rgba(165, 242, 243, 0.4); background: transparent; border: none;
+            cursor: pointer; transition: 0.2s; text-shadow: 0 0 2px rgba(165, 242, 243, 0.2);
+            padding: 0 6px;
+        }
+        .glyph-btn:hover { color: var(--pine); text-shadow: 0 0 8px var(--pine); transform: scale(1.2); }
+        .glyph-btn.del { color: rgba(255, 60, 60, 0.6); }
+        .glyph-btn.del:hover { color: var(--holly); text-shadow: 0 0 8px var(--holly); }
+        
+        .glyph-tooltip { position: relative; }
+        .glyph-tooltip:hover::after {
+            content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: #000; border: 1px solid var(--pine); color: var(--pine); font-size: 9px;
+            padding: 2px 4px; white-space: nowrap; pointer-events: none; margin-bottom: 5px;
+        }
+
+        .toast { background: rgba(10, 16, 21, 0.95); border-left: 4px solid var(--pine); padding: 12px 20px; color: white; font-size: 0.8rem; box-shadow: 0 5px 15px rgba(0,0,0,0.5); animation: slideIn 0.3s ease-out; margin-bottom: 10px; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="snow-overlay"></div>
+
+    <div class="dashboard-container h-full flex relative z-10">
+        <div class="w-full md:w-1/3 flex flex-col border-r border-gray-800 bg-black/80">
+            <div class="p-4 border-b border-gray-800">
+                <h1 class="text-2xl font-header neon-green">WEYU <span class="neon-red text-lg">YULETIDE</span></h1>
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span id="sys-status" class="text-yellow-600">PYTHON: LOADING...</span>
+                    <span id="clock">00:00:00</span>
+                </div>
+            </div>
+
+            <div class="p-4 space-y-3 border-b border-gray-800">
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-gray-900/50 p-2 rounded border border-gray-800">
+                        <div class="text-xs text-gray-500">PROJECTS</div>
+                        <div id="count-proj" class="text-xl neon-green">...</div>
+                    </div>
+                    <div class="bg-gray-900/50 p-2 rounded border border-gray-800">
+                        <div class="text-xs text-gray-500">INCIDENTS</div>
+                        <div id="count-inc" class="text-xl neon-red">...</div>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="btn-add-proj" class="btn-base btn-green flex-1 py-2 rounded">[+] PROJECT</button>
+                    <button id="btn-add-inc" class="btn-base btn-red flex-1 py-2 rounded">[+] INCIDENT</button>
+                </div>
+                <button id="btn-scratchpad" class="btn-base w-full py-2 border border-gray-600 text-gray-400 hover:text-white hover:border-white rounded" title="Ctrl+~">[ * ] OPEN SCRATCHPAD</button>
+                <div class="flex gap-2">
+                    <button id="btn-export" class="btn-base flex-1 py-1 border border-gray-700 text-xs text-gray-500 hover:text-white rounded">EXPORT .SRCD</button>
+                    <button id="btn-import" class="btn-base flex-1 py-1 border border-gray-700 text-xs text-gray-500 hover:text-white rounded">IMPORT .SRCD</button>
+                    <input type="file" id="file-input" class="hidden">
+                </div>
+            </div>
+
+            <div class="flex-grow overflow-y-auto p-2 space-y-4">
+                <div><h3 class="font-header text-xs text-gray-500 mb-2 px-2">PROJECT LOGS</h3><div id="list-proj" class="space-y-1"></div></div>
+                <div><h3 class="font-header text-xs text-gray-500 mb-2 px-2">INCIDENT REPORTS</h3><div id="list-inc" class="space-y-1"></div></div>
+            </div>
+        </div>
+
+        <div class="w-full md:w-2/3 bg-[#0A0F14] relative">
+            <div id="detail-view" class="h-full flex flex-col p-6">
+                <div class="h-full flex flex-col items-center justify-center opacity-30">
+                    <div class="text-6xl mb-4">🎄</div>
+                    <h2 class="font-header text-2xl neon-green">AWAITING INPUT</h2>
+                    <p class="text-sm mt-2">YULETIDE STORAGE ACTIVE</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-scratchpad" class="modal-backdrop hidden">
+        <div class="glass-panel w-11/12 h-5/6 rounded-sm border-t-2 border-green-900">
+            <div class="flex justify-between items-center px-4 py-2 border-b border-gray-800 bg-black/40">
+                <h2 class="font-header text-sm text-gray-400">SCRATCHPAD <span class="text-green-900">v4.8</span></h2>
+                <div class="flex gap-2">
+                    <button id="launch-py" class="glyph-btn text-yellow-500" title="Python">λ</button>
+                    <button id="launch-js" class="glyph-btn text-purple-500" title="Validator">Ω</button>
+                    <button id="launch-rust" class="glyph-btn text-red-500" title="Rust">⫷</button>
+                    <button id="launch-cpp" class="glyph-btn text-blue-500" title="C++">Ψ</button>
+                </div>
+            </div>
+            <div class="flex bg-[#050505] border-b border-gray-800 px-2 pt-2 gap-1">
+                <button data-tab="main" class="tab-btn tab-active flex-1 py-2 text-xs font-bold rounded-t">// MEMO.LOG</button>
+                <button data-tab="snippet" class="tab-btn tab-inactive flex-1 py-2 text-xs font-bold rounded-t text-blue-400">// CODE.FRAG</button>
+                <button data-tab="vip" class="tab-btn tab-inactive flex-1 py-2 text-xs font-bold rounded-t text-yellow-600">// VIP.CTX</button>
+            </div>
+            <div class="flex-grow relative bg-[#050505] overflow-hidden">
+                <textarea id="pad-main" class="pad-area w-full h-full bg-transparent p-4 text-sm text-[#A5F2F3] font-mono resize-none focus:outline-none" placeholder="> SESSION NOTES..."></textarea>
+                <textarea id="pad-snippet" class="pad-area w-full h-full bg-transparent p-4 text-sm text-blue-300 font-mono resize-none focus:outline-none hidden" placeholder="> CODE FRAGMENTS..."></textarea>
+                <textarea id="pad-vip" class="pad-area w-full h-full bg-transparent p-4 text-sm text-yellow-100/80 font-mono resize-none focus:outline-none hidden" placeholder="> VIP CONTEXT..."></textarea>
+                <div id="pad-preview" class="pad-area absolute inset-0 bg-black/90 p-6 hidden overflow-auto prose prose-invert max-w-none text-xs z-20"></div>
+            </div>
+            <div class="flex justify-start gap-0 bg-[#080808] border-t border-gray-800">
+                <button id="sp-btn-preview" class="px-4 py-2 text-[10px] font-bold text-gray-400 hover:bg-gray-800 border-r border-gray-800 uppercase">[ PREVIEW ]</button>
+                <button id="sp-btn-save" class="px-4 py-2 text-[10px] font-bold text-green-600 hover:bg-green-900/20 border-r border-gray-800 uppercase">[ SAVE ]</button>
+                <button id="sp-btn-clear" class="px-4 py-2 text-[10px] font-bold text-yellow-600 hover:bg-yellow-900/20 border-r border-gray-800 uppercase">[ CLEAR ]</button>
+                <button id="sp-btn-close" class="px-4 py-2 text-[10px] font-bold text-red-600 hover:bg-red-900/20 border-r border-gray-800 uppercase">[ CLOSE ]</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-confirm" class="modal-backdrop hidden">
+        <div class="modal-content w-96 p-6 rounded border border-red-500 bg-[#050505]">
+            <h3 id="confirm-title" class="font-header text-red-500 mb-2">CONFIRM ACTION</h3>
+            <p id="confirm-msg" class="text-xs text-gray-300 mb-6 font-mono"></p>
+            <div class="flex justify-end gap-2">
+                <button id="btn-confirm-cancel" class="px-4 py-2 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 rounded">CANCEL</button>
+                <button id="btn-confirm-ok" class="px-4 py-2 text-xs font-bold bg-red-900/50 border border-red-500 text-red-100 hover:bg-red-600 rounded">PROCEED</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fab-container">
+        <div class="fab-menu">
+            <button id="fab-reset" class="fab-item">RESET VIEW</button>
+            <button id="fab-scratch" class="fab-item">SCRATCHPAD</button>
+            <button id="fab-inc" class="fab-item">NEW INCIDENT</button>
+            <button id="fab-proj" class="fab-item">NEW PROJECT</button>
+        </div>
+        <button class="fab-main">+</button>
+    </div>
+
+    <div id="modal-data" class="modal-backdrop hidden">
+        <form id="form-data" class="modal-content w-full max-w-lg p-6 rounded border border-gray-700">
+            <h2 class="font-header text-xl neon-green mb-4">ENTRY PROTOCOL</h2>
+            <input type="hidden" id="entry-id"><input type="hidden" id="entry-type">
+            <div class="space-y-4">
+                <input type="text" id="entry-title" class="w-full p-2 rounded" placeholder="TITLE (REQUIRED)" required>
+                <select id="entry-category" class="w-full p-2 rounded text-xs" title="Incident Category">
+                    </select>
+                <div class="flex gap-4">
+                    <select id="entry-status" class="flex-1 p-2 rounded">
+                        <option>Active</option>
+                        <option>Resolved</option>
+                        <option>Pending</option>
+                        <option>Archived</option>
+                    </select>
+                    <input type="text" id="entry-duedate" class="flex-1 p-2 rounded" placeholder="DUE (YYYY-MM-DD)">
+                </div>
+                <div class="flex gap-4">
+                    <input type="text" id="entry-owner" class="flex-1 p-2 rounded text-xs" placeholder="OWNER">
+                    <input type="text" id="entry-number" class="flex-1 p-2 rounded text-xs" placeholder="REF #">
+                </div>
+                <textarea id="entry-notes" rows="4" class="w-full p-2 rounded" placeholder="NOTES"></textarea>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" class="btn-close-form px-4 py-2 text-xs bg-gray-800 rounded">CANCEL</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-green-700 text-white rounded">SAVE</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div id="modal-att" class="modal-backdrop hidden">
+        <form id="form-att" class="modal-content w-96 p-6 rounded border border-gray-700">
+            <h3 class="font-header text-sm text-gray-400 mb-2">ATTACHMENT</h3>
+            <input type="text" id="att-label" class="w-full p-2 mb-4 rounded" placeholder="Label" required>
+            <div class="flex justify-end gap-2"><button type="button" class="btn-close-att px-3 py-1 text-xs bg-gray-800 rounded">CANCEL</button><button type="submit" class="px-3 py-1 text-xs font-bold bg-green-700 rounded">CONFIRM</button></div>
+        </form>
+    </div>
+
+    <div id="modal-viewer" class="modal-backdrop hidden">
+        <div class="modal-content w-11/12 h-5/6 rounded border border-pine bg-[#0A0F14] flex flex-col">
+            <div class="flex justify-between items-center p-3 border-b border-gray-800">
+                <h3 id="view-title" class="font-header text-pine">FILE VIEWER</h3>
+                <button class="btn-close-view glyph-btn text-xl text-red-500 hover:text-white">✕</button>
+            </div>
+            <div id="view-body" class="flex-grow p-4 overflow-auto font-mono text-sm text-frost whitespace-pre-wrap"></div>
+        </div>
+    </div>
+
+    <template id="tpl-sandbox">
+        <div class="modal-backdrop hidden"><div class="modal-content w-4/5 h-4/5 rounded-lg p-0 border-2"><div class="bg-black border-b border-gray-800 p-3 flex justify-between items-center"><h2 class="sb-title font-header text-lg">SANDBOX</h2><button class="btn-close text-gray-500 hover:text-white font-bold">✕</button></div><div class="flex gap-0 h-full"><div class="w-1/2 flex flex-col border-r border-gray-800"><textarea class="sb-in flex-grow p-4 text-xs font-mono bg-[#050505] text-gray-300 resize-none focus:outline-none" spellcheck="false"></textarea><div class="p-2 border-t border-gray-800 bg-black"><button class="sb-run w-full py-2 btn-base border rounded">EXECUTE</button></div></div><div class="w-1/2 flex flex-col bg-[#080808]"><div class="p-2 text-[10px] text-gray-500 border-b border-gray-800">STDOUT / STDERR</div><textarea class="sb-out flex-grow p-4 text-xs font-mono bg-transparent text-green-400 resize-none focus:outline-none" readonly></textarea></div></div></div></div>
+    </template>
+
+    <div id="modal-js" class="modal-backdrop hidden">
+        <div class="modal-content w-4/5 h-4/5 rounded-lg p-4 border border-purple-500 bg-[#050505]"><div class="flex justify-between items-center mb-2"><h2 class="font-header text-lg text-purple-400">STATIC ANALYZER (Ω)</h2><button class="btn-close text-gray-500 hover:text-white">✕</button></div><div class="flex gap-4 h-full pb-2"><div class="w-1/2 flex flex-col"><textarea id="js-in" class="flex-grow p-3 text-xs font-mono border border-purple-900/50 rounded bg-black/50 text-purple-200" placeholder="// Validates IDs against VIP Tab..."></textarea><button id="js-run" class="mt-2 py-2 btn-base border border-purple-500 text-purple-400 hover:bg-purple-900 rounded">ANALYZE</button></div><div class="w-1/2 flex flex-col"><textarea id="js-out" class="flex-grow p-3 text-xs font-mono border border-purple-900/50 rounded bg-black text-gray-300" readonly></textarea></div></div></div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col items-end"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const NAMESPACE = 'WEYU_HYBRID_';
+            const IDB_NAME = 'WEYU_MEDIA';
+            
+            // --- CONSTANTS ---
+            const INCIDENT_CATEGORIES = [
+                "CATALOG: SELECT TYPE...", 
+                "THREAT: R&D ESPIONAGE", 
+                "THREAT: FINANCIAL FRAUD",
+                "THREAT: LEGAL / REGULATORY",
+                "THREAT: COSMIC ENTITY",
+                "THREAT: TERRESTRIAL DANGER",
+                "THREAT: DIGITAL INTRUSION",
+                "OPERATIONAL: INFRASTRUCTURE FAILURE",
+                "OPERATIONAL: SUPPLY CHAIN DISRUPTION",
+                "PERSONNEL: INTERNAL CONFLICT",
+                "PERSONNEL: EXTERNAL HARASSMENT"
+            ];
+
+            const SCRATCHPAD_TABS = ['main', 'snippet', 'vip'];
+            
+            // --- ELEMENT REFS ---
+            const ELEMENTS = {
+                clock: document.getElementById('clock'),
+                sysStatus: document.getElementById('sys-status'),
+                lists: { proj: document.getElementById('list-proj'), inc: document.getElementById('list-inc') },
+                counts: { proj: document.getElementById('count-proj'), inc: document.getElementById('count-inc') },
+                detail: document.getElementById('detail-view'),
+                toasts: document.getElementById('toast-container'),
+                modals: { 
+                    scratch: document.getElementById('modal-scratchpad'), 
+                    data: document.getElementById('modal-data'), 
+                    att: document.getElementById('modal-att'), 
+                    js: document.getElementById('modal-js'), 
+                    template: document.getElementById('tpl-sandbox'),
+                    viewer: document.getElementById('modal-viewer'),
+                    confirm: document.getElementById('modal-confirm')
+                },
+                pads: { 
+                    main: document.getElementById('pad-main'), 
+                    snippet: document.getElementById('pad-snippet'), 
+                    vip: document.getElementById('pad-vip') 
+                },
+                viewer: { title: document.getElementById('view-title'), body: document.getElementById('view-body') }
+            };
+
+            let state = { projects: [], incidents: [], context: null, tempFile: null, activeTab: 'main', pyodide: null };
+
+            // --- WRAPPERS ---
+            const ls = { get: (k) => { try { return JSON.parse(localStorage.getItem(NAMESPACE + k) || '[]'); } catch { return []; } }, set: (k, v) => localStorage.setItem(NAMESPACE + k, JSON.stringify(v)), clear: () => localStorage.clear() };
+            const idb = {
+                open: () => new Promise((res, rej) => { const req = indexedDB.open(IDB_NAME, 1); req.onupgradeneeded = (e) => { if (!e.target.result.objectStoreNames.contains('media')) e.target.result.createObjectStore('media'); }; req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error); }),
+                put: async (key, blob) => { const db = await idb.open(); return new Promise(r => { const tx=db.transaction('media','readwrite'); tx.objectStore('media').put(blob, key).onsuccess=()=>r(true); }); },
+                get: async (key) => { const db = await idb.open(); return new Promise(r => { const req = db.transaction('media','readonly').objectStore('media').get(key); req.onsuccess = () => r(req.result); req.onerror = () => r(null); }); },
+                clear: async () => { const db = await idb.open(); return new Promise(r => { const tx=db.transaction('media','readwrite'); tx.objectStore('media').clear().oncomplete=()=>r(true); }); }
+            };
+            const sess = { get: () => JSON.parse(sessionStorage.getItem(NAMESPACE + 'scratch') || '{"main":"", "snippet":"", "vip":""}'), set: (v) => sessionStorage.setItem(NAMESPACE + 'scratch', JSON.stringify(v)), clear: () => sessionStorage.clear() };
+            const notify = (msg, type = 'info') => { const color = type === 'error' ? 'var(--holly)' : 'var(--pine)'; const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; el.style.borderLeftColor = color; ELEMENTS.toasts.appendChild(el); setTimeout(() => el.remove(), 4000); };
+            const genId = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15);
+            
+            const getReadableTimeStamp = () => { 
+                const now = new Date(); 
+                const pad = n => String(n).padStart(2,'0'); 
+                const datePart = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+                const timePart = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+                return `${datePart}_${timePart}`;
+            };
+            
+            // --- PISTON API HELPER ---
+            const runPiston = async (lang, code, outEl) => {
+                outEl.value = `[${lang.toUpperCase()}] Compiling on Piston Grid...`;
+                const config = { 'cpp': { l: 'c++', v: '10.2.0' }, 'rust': { l: 'rust', v: '1.68.2' } }[lang];
+                try {
+                    const res = await fetch('https://emkc.org/api/v2/piston/execute', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ language: config.l, version: config.v, files: [{ content: code }] })
+                    });
+                    const data = await res.json();
+                    outEl.value = data.run ? (data.run.stdout || "") + (data.run.stderr || "") : "API Error";
+                } catch (e) { outEl.value = `Connection Failed: ${e.message}`; }
+            };
+
+            // --- CONFIRMATION HELPER ---
+            const showConfirm = (title, msg, callback) => {
+                document.getElementById('confirm-title').textContent = title;
+                document.getElementById('confirm-msg').textContent = msg;
+                const okBtn = document.getElementById('btn-confirm-ok');
+                const cancelBtn = document.getElementById('btn-confirm-cancel');
+                
+                // Clone button to clear old event listeners safely
+                const newOk = okBtn.cloneNode(true);
+                okBtn.parentNode.replaceChild(newOk, okBtn);
+                
+                newOk.onclick = async () => {
+                    await callback();
+                    ELEMENTS.modals.confirm.classList.add('hidden');
+                };
+                
+                cancelBtn.onclick = () => ELEMENTS.modals.confirm.classList.add('hidden');
+                ELEMENTS.modals.confirm.classList.remove('hidden');
+            };
+
+            // --- MAIN LOGIC ---
+            const populateCategorySelect = (selectEl) => {
+                selectEl.innerHTML = '';
+                INCIDENT_CATEGORIES.forEach((cat, index) => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    if (index === 0) {
+                        option.disabled = true;
+                        option.selected = true;
+                    }
+                    selectEl.appendChild(option);
+                });
+            };
+
+            const refreshViews = () => {
+                state.projects = ls.get('projects'); state.incidents = ls.get('incidents');
+                ELEMENTS.counts.proj.textContent = state.projects.length; ELEMENTS.counts.inc.textContent = state.incidents.length;
+                const render = (arr, el, type) => { el.innerHTML = ''; arr.forEach(item => { const div = document.createElement('div'); div.className = `p-2 text-xs border-l-2 bg-[#0A0F14] cursor-pointer transition text-gray-300 ${type === 'project' ? 'border-green-600 hover:bg-green-900/30' : 'border-red-600 hover:bg-red-900/30'}`; div.textContent = item.title; div.onclick = () => loadDetail(item, type); el.appendChild(div); }); };
+                render(state.projects, ELEMENTS.lists.proj, 'project'); render(state.incidents, ELEMENTS.lists.inc, 'incident');
+            };
+
+            const openViewer = (title, content, isImage = false) => {
+                ELEMENTS.viewer.title.textContent = title; ELEMENTS.viewer.body.innerHTML = '';
+                if(isImage) { const img = document.createElement('img'); img.src = content; img.style.maxWidth = '100%'; img.style.border = '1px solid var(--pine)'; ELEMENTS.viewer.body.appendChild(img); } 
+                else { ELEMENTS.viewer.body.textContent = content; }
+                ELEMENTS.modals.viewer.classList.remove('hidden');
+            };
+
+            const loadDetail = (item, type) => {
+                ELEMENTS.detail.innerHTML = `
+                    <div class="flex justify-between items-start border-b border-gray-800 pb-4 mb-4">
+                        <div><div class="text-[10px] text-gray-500 uppercase tracking-widest">${type}</div><h2 class="3xl font-header ${type === 'project'?'text-green-400':'text-red-400'}">${item.title}</h2></div>
+                        <div class="flex gap-2">
+                            <button id="btn-edit" class="glyph-btn glyph-tooltip text-lg" data-tip="EDIT">⌖</button>
+                            <button id="btn-entry-del" class="glyph-btn glyph-tooltip text-lg del" data-tip="DELETE">⫸</button>
+                        </div>
+                    </div>
+                    ${item.category ? `<div class="text-xs text-red-400 font-bold mb-2">[ CATEGORY: ${item.category} ]</div>` : ''}
+                    <div class="bg-black/50 p-4 rounded border border-gray-800 mb-6 font-mono text-sm text-gray-300 min-h-[100px] whitespace-pre-wrap">${item.notes || 'No Data.'}</div>
+                    <div class="flex justify-between items-center mb-2"><h3 class="font-header text-sm text-gray-500">ATTACHMENTS</h3><button id="btn-add-file" class="text-xs bg-green-900/30 text-green-400 border border-green-800 px-2 py-1 rounded hover:bg-green-500 hover:text-black transition">+ FILE</button></div>
+                    <div id="att-container" class="border border-gray-800 rounded bg-[#050505] min-h-[50px]"></div>
+                `;
+
+                const attContainer = document.getElementById('att-container');
+                if(!item.attachments || item.attachments.length === 0) attContainer.innerHTML = '<div class="p-2 text-xs text-gray-600">No Attachments</div>';
+                else {
+                    item.attachments.forEach((att, idx) => {
+                        const row = document.createElement('div');
+                        row.className = 'flex items-center justify-between p-2 bg-black/40 border-b border-gray-800 text-xs';
+                        const icon = att.storage === 'ls' ? '📄' : '💾';
+                        row.innerHTML = `<div class="flex flex-col"><span class="text-yellow-500 font-bold">${icon} ${att.label}</span><span class="text-gray-600 text-[10px]">${att.filename}</span></div><div class="flex gap-4"><button class="glyph-btn glyph-tooltip" data-tip="VIEW">◬</button><button class="glyph-btn glyph-tooltip" data-tip="EDIT">⌖</button><button class="glyph-btn glyph-tooltip del" data-tip="DELETE">⫸</button></div>`;
+                        const btns = row.querySelectorAll('button');
+                        
+                        // VIEW ATTACHMENT LOGIC (SCRATCHPAD PARSING)
+                        btns[0].onclick = async () => {
+                            if(att.storage === 'ls') {
+                                try {
+                                    const data = JSON.parse(att.content);
+                                    if(att.filename.endsWith('.srcd') && data.scratchpad) { 
+                                        const pads = data.scratchpad || {main:'', snippet:'', vip:''}; 
+                                        const text = `/// MEMO.LOG ///////////////////////////////////////////////\n\n${pads.main}\n\n/// CODE.FRAG //////////////////////////////////////////////\n\n${pads.snippet}\n\n/// VIP.CTX ////////////////////////////////////////////////\n\n${pads.vip}`; 
+                                        openViewer(att.filename, text); 
+                                    } else {
+                                        openViewer(att.filename, att.content);
+                                    }
+                                } catch (e) {
+                                    openViewer(att.filename, att.content); 
+                                }
+                            } else {
+                                const blob = await idb.get(att.ref);
+                                if(blob) { if(blob.type.startsWith('image/')) openViewer(att.filename, URL.createObjectURL(blob), true); else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = att.filename; a.click(); } } else notify("MEDIA MISSING", "error");
+                            }
+                        };
+                        
+                        btns[1].onclick = () => { state.context = { id: item.id, type, action: 'edit', idx }; document.getElementById('att-label').value = att.label; ELEMENTS.modals.att.classList.remove('hidden'); };
+                        
+                        // ATTACHMENT DELETE CONFIRMATION
+                        btns[2].onclick = () => {
+                            showConfirm("DETACH FILE", "Are you sure you want to remove this attachment? It cannot be recovered.", () => {
+                                item.attachments.splice(idx, 1); 
+                                ls.set(type === 'project'?'projects':'incidents', state[type === 'project'?'projects':'incidents']); 
+                                loadDetail(item, type);
+                            });
+                        };
+                        attContainer.appendChild(row);
+                    });
+                }
+
+                // ENTRY DELETE CONFIRMATION
+                document.getElementById('btn-entry-del').onclick = () => {
+                    showConfirm("DELETE ENTRY", "PERMANENTLY DELETE THIS ENTRY? This action cannot be undone.", () => {
+                        state[type === 'project'?'projects':'incidents'] = state[type === 'project'?'projects':'incidents'].filter(x => x.id !== item.id);
+                        ls.set(type === 'project'?'projects':'incidents', state[type === 'project'?'projects':'incidents']);
+                        refreshViews(); resetView();
+                    });
+                };
+                
+                document.getElementById('btn-edit').onclick = () => { 
+                    document.getElementById('entry-id').value = item.id; 
+                    document.getElementById('entry-type').value = type; 
+                    document.getElementById('entry-title').value = item.title; 
+                    document.getElementById('entry-status').value = item.status; 
+                    document.getElementById('entry-duedate').value = item.dueDate || ''; 
+                    document.getElementById('entry-owner').value = item.owner || ''; 
+                    document.getElementById('entry-number').value = item.number || ''; 
+                    document.getElementById('entry-notes').value = item.notes; 
+
+                    const categorySelect = document.getElementById('entry-category');
+                    categorySelect.value = item.category || INCIDENT_CATEGORIES[0]; 
+
+                    ELEMENTS.modals.data.classList.remove('hidden'); 
+                    updateModalVisibility(type); 
+                };
+
+                document.getElementById('btn-add-file').onclick = () => { state.context = { id: item.id, type, action: 'add' }; const fi = document.getElementById('file-input'); fi.removeAttribute('accept'); fi.value=''; fi.click(); };
+            };
+
+            // --- Comprehensive resetView function (FIXED) ---
+            const resetView = () => { 
+                // Reset the main detail panel
+                ELEMENTS.detail.innerHTML = `<div class="h-full flex flex-col items-center justify-center opacity-30"><div class="text-6xl mb-4">🎄</div><h2 class="font-header text-2xl neon-green">AWAITING INPUT</h2><p class="text-sm mt-2">YULETIDE STORAGE ACTIVE</p></div>`; 
+                
+                // Hide all persistent modals/panels
+                ELEMENTS.modals.scratch.classList.add('hidden');
+                ELEMENTS.modals.data.classList.add('hidden');
+                ELEMENTS.modals.att.classList.add('hidden');
+                ELEMENTS.modals.js.classList.add('hidden');
+                ELEMENTS.modals.viewer.classList.add('hidden');
+                ELEMENTS.modals.confirm.classList.add('hidden');
+            };
+            // --- END Comprehensive resetView function ---
+            
+            // Helper to toggle Category Select visibility
+            const updateModalVisibility = (type) => {
+                const categorySelect = document.getElementById('entry-category');
+                if (type === 'project') {
+                    categorySelect.classList.add('hidden');
+                } else {
+                    categorySelect.classList.remove('hidden');
+                }
+            };
+
+
+            // --- FILE IO ---
+            document.getElementById('file-input').onchange = (e) => {
+                const f = e.target.files[0]; if(!f) return;
+                if(!state.context) { // IMPORT
+                    const r = new FileReader(); r.onload = (ev) => { try { const d = JSON.parse(ev.target.result); if(d.projects && d.incidents) { if(confirm("Overwrite Local Data? Cancel to Merge.")) { state.projects = d.projects; state.incidents = d.incidents; if(d.scratchpad) sess.set(d.scratchpad); } else { state.projects = [...state.projects, ...d.projects]; state.incidents = [...state.incidents, ...d.incidents]; if(d.scratchpad) { const curr = sess.get(); curr.main += `\n--- IMPORT ---\n${d.scratchpad.main}`; curr.snippet += `\n${d.scratchpad.snippet}`; curr.vip += `\n${d.scratchpad.vip}`; sess.set(curr); } } ls.set('projects', state.projects); ls.set('incidents', state.incidents); const pads = sess.get(); ELEMENTS.pads.main.value = pads.main; ELEMENTS.pads.snippet.value = pads.snippet; ELEMENTS.pads.vip.value = pads.vip; refreshViews(); notify("Import Complete.", "success"); } } catch(e) { notify("Import Failed", "error"); } }; r.readAsText(f);
+                } else { // ATTACH
+                    state.tempFile = f; document.getElementById('att-label').value = f.name; ELEMENTS.modals.att.classList.remove('hidden');
+                }
+            };
+
+            document.getElementById('form-att').onsubmit = async (e) => {
+                e.preventDefault(); const { id, type, action, idx } = state.context; const arr = type === 'project' ? state.projects : state.incidents; const item = arr.find(x => x.id === id); const label = document.getElementById('att-label').value;
+                if (action === 'edit') { item.attachments[idx].label = label; ls.set(type === 'project'?'projects':'incidents', arr); refreshViews(); loadDetail(item, type); } 
+                else { 
+                    const f = state.tempFile; 
+                    if(f.name.endsWith('.srcd') || f.name.endsWith('.json')) { 
+                        const r = new FileReader(); 
+                        r.onload = (ev) => { 
+                            if (f.size > 1024 * 512) { 
+                                notify("File too large for direct attachment (limit 512KB).", "error");
+                                return;
+                            }
+                            item.attachments.push({ storage: 'ls', filename: f.name, label, content: ev.target.result }); 
+                            ls.set(type === 'project'?'projects':'incidents', arr); 
+                            refreshViews(); loadDetail(item, type); 
+                        }; 
+                        r.readAsText(f); 
+                    } else { 
+                        const ref = genId(); 
+                        await idb.put(ref, f); 
+                        item.attachments.push({ storage: 'idb', filename: f.name, label, ref }); 
+                        ls.set(type === 'project'?'projects':'incidents', arr); 
+                        refreshViews(); loadDetail(item, type); 
+                    } 
+                }
+                ELEMENTS.modals.att.classList.add('hidden'); state.context = null;
+            };
+
+            document.getElementById('btn-export').onclick = () => { const ts = getReadableTimeStamp(); const data = { appId: "SRC-D_WEYU_HYBRID", projects: state.projects, incidents: state.incidents, scratchpad: sess.get() }; const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); const a = document.createElement('a'); const filename = `WEYU_${ts}.srcd`; a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); notify(`Exported: ${filename}`, "success"); };
+
+            // --- INIT ---
+            populateCategorySelect(document.getElementById('entry-category'));
+            refreshViews();
+            const pads = sess.get(); 
+            ELEMENTS.pads.main.value = pads.main; 
+            ELEMENTS.pads.snippet.value = pads.snippet; 
+            ELEMENTS.pads.vip.value = pads.vip;
+            setInterval(() => ELEMENTS.clock.textContent = new Date().toLocaleTimeString(), 1000);
+
+            // --- EVENTS ---
+            document.getElementById('fab-reset').onclick = () => { 
+                resetView(); 
+                notify("View Reset Complete.", "success"); 
+            };
+            document.getElementById('fab-scratch').onclick = () => ELEMENTS.modals.scratch.classList.remove('hidden');
+            
+            document.getElementById('fab-inc').onclick = () => { 
+                document.getElementById('form-data').reset(); 
+                document.getElementById('entry-type').value='incident'; 
+                document.getElementById('entry-category').value = INCIDENT_CATEGORIES[0]; 
+                updateModalVisibility('incident');
+                ELEMENTS.modals.data.classList.remove('hidden'); 
+            };
+            
+            document.getElementById('fab-proj').onclick = () => { 
+                document.getElementById('form-data').reset(); 
+                document.getElementById('entry-type').value='project'; 
+                updateModalVisibility('project');
+                ELEMENTS.modals.data.classList.remove('hidden'); 
+            };
+            
+            document.getElementById('btn-add-proj').onclick = document.getElementById('fab-proj').onclick;
+            document.getElementById('btn-add-inc').onclick = document.getElementById('fab-inc').onclick;
+            document.getElementById('btn-scratchpad').onclick = document.getElementById('fab-scratch').onclick;
+            document.getElementById('btn-import').onclick = () => { state.context = null; const fi = document.getElementById('file-input'); fi.setAttribute('accept', '.srcd,.json'); fi.value=''; fi.click(); };
+            document.querySelectorAll('.btn-close, .btn-close-form, .btn-close-att').forEach(b => b.onclick = (e) => e.target.closest('.modal-backdrop').classList.add('hidden'));
+            document.querySelector('.btn-close-view').onclick = () => ELEMENTS.modals.viewer.classList.add('hidden');
+            
+            // SCRATCHPAD PREVIEW FUNCTION (FIXED FOR RAW HTML PREVIEW)
+            document.getElementById('sp-btn-preview').onclick = () => { 
+                const area = document.getElementById(`pad-${state.activeTab}`); 
+                const prev = document.getElementById('pad-preview'); 
+                
+                if (prev.classList.contains('hidden')) { 
+                    const content = area.value;
+                    
+                    // Sanitize and set raw HTML content
+                    prev.innerHTML = DOMPurify.sanitize(content);
+                    prev.classList.remove('hidden'); 
+                    
+                    // Reapply classes for styling (optional, but ensures text color/prose styles apply)
+                    prev.className = 'pad-area absolute inset-0 bg-black/90 p-6 overflow-auto prose prose-invert max-w-none text-xs z-20';
+                    
+                } else {
+                    prev.classList.add('hidden'); 
+                }
+            };
+
+            // SCRATCHPAD SAVE FUNCTION (FIXED FILENAME)
+            document.getElementById('sp-btn-save').onclick = () => { 
+                const ts = getReadableTimeStamp();
+                const labelMap = { main: 'MEMO', snippet: 'CODE', vip: 'VIP' };
+                const label = labelMap[state.activeTab] || 'SCRATCH';
+                
+                const data = { appId: "SRC-D_WEYU_SCRATCH", scratchpad: sess.get() };
+                const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); 
+                const a = document.createElement('a'); 
+                const filename = `${label}_${ts}.srcd`; 
+                
+                a.href = URL.createObjectURL(blob); 
+                a.download = filename; 
+                document.body.appendChild(a); 
+                a.click(); 
+                document.body.removeChild(a); 
+                notify(`Scratchpad Exported: ${filename}`, "success"); 
+            };
+            
+            // SCRATCHPAD CLEAR FUNCTION (FIXED WITH CONFIRMATION MODAL)
+            document.getElementById('sp-btn-clear').onclick = () => { 
+                const currentPad = ELEMENTS.pads[state.activeTab];
+                if (!currentPad.value.trim()) {
+                    notify("Pad is already empty.", "info");
+                    return;
+                }
+
+                showConfirm("CLEAR PAD", `Permanently clear contents of the current tab: ${state.activeTab.toUpperCase()}. This cannot be undone.`, () => {
+                    currentPad.value = ''; 
+                    
+                    const newSession = sess.get();
+                    newSession[state.activeTab] = '';
+                    sess.set(newSession);
+
+                    notify(`Tab ${state.activeTab.toUpperCase()} cleared.`, "success");
+                });
+            };
+            
+            document.getElementById('sp-btn-close').onclick = () => ELEMENTS.modals.scratch.classList.add('hidden');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.onclick = (e) => { 
+                const t = e.target.dataset.tab; 
+                document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn tab-inactive flex-1 py-2 text-xs font-bold rounded-t transition uppercase tracking-widest'); 
+                e.target.className = 'tab-btn tab-active flex-1 py-2 text-xs font-bold rounded-t transition uppercase tracking-widest'; 
+                
+                // Hide all pads, show current pad
+                SCRATCHPAD_TABS.forEach(pad => document.getElementById(`pad-${pad}`).classList.add('hidden'));
+                document.getElementById(`pad-${t}`).classList.remove('hidden');
+                
+                // Hide preview when switching tabs
+                document.getElementById('pad-preview').classList.add('hidden');
+                
+                state.activeTab = t; 
+            });
+            
+            document.querySelectorAll('.pad-area').forEach(el => el.oninput = () => sess.set({ 
+                main: ELEMENTS.pads.main.value, 
+                snippet: ELEMENTS.pads.snippet.value, 
+                vip: ELEMENTS.pads.vip.value 
+            }));
+            
+            try { if(window.loadPyodide) { state.pyodide = await loadPyodide({ indexURL: "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/" }); ELEMENTS.sysStatus.textContent = "PYTHON: ONLINE"; ELEMENTS.sysStatus.className = "text-green-500 neon-green"; } } catch(e) {}
+
+            // --- FORM DATA HANDLER ---
+            document.getElementById('form-data').onsubmit = (e) => {
+                e.preventDefault();
+                
+                const id = document.getElementById('entry-id').value;
+                const type = document.getElementById('entry-type').value;
+                const isNew = !id;
+                
+                const title = document.getElementById('entry-title').value.trim();
+                if (!title) { notify("Title is required.", "error"); return; } 
+
+                const status = document.getElementById('entry-status').value;
+                const dueDate = document.getElementById('entry-duedate').value.trim();
+                const owner = document.getElementById('entry-owner').value.trim();
+                const number = document.getElementById('entry-number').value.trim();
+                const notes = document.getElementById('entry-notes').value;
+                const category = document.getElementById('entry-category').value; 
+
+                if (type === 'incident' && category === INCIDENT_CATEGORIES[0]) {
+                    notify("Incident Category must be selected.", "error"); return;
+                }
+                
+                const arrayKey = type === 'project' ? 'projects' : 'incidents';
+                let currentData = state[arrayKey];
+                let entry;
+
+                if (isNew) {
+                    entry = {
+                        id: genId(),
+                        type: type,
+                        title, status, owner, number, notes,
+                        dueDate: dueDate || null,
+                        category: type === 'incident' ? category : null, 
+                        attachments: []
+                    };
+                    currentData.push(entry);
+                } else {
+                    entry = currentData.find(x => x.id === id);
+                    if (entry) {
+                        entry.title = title;
+                        entry.status = status;
+                        entry.dueDate = dueDate || null;
+                        entry.owner = owner;
+                        entry.number = number;
+                        entry.notes = notes;
+                        if (type === 'incident') {
+                            entry.category = category;
+                        }
+                    }
+                }
+
+                ls.set(arrayKey, currentData);
+                refreshViews();
+                e.target.closest('.modal-backdrop').classList.add('hidden');
+                
+                if (!isNew && entry) {
+                    loadDetail(entry, type);
+                }
+                
+                notify(isNew ? "ENTRY CREATED" : "ENTRY UPDATED", "success");
+            };
+            // --- END FORM DATA HANDLER ---
+
+            // SANDBOXES
+            document.getElementById('launch-py').onclick = () => { const tpl = ELEMENTS.modals.template.content.cloneNode(true); const modal = tpl.querySelector('.modal-backdrop'); modal.querySelector('.sb-title').style.color = '#FFD700'; modal.querySelector('.sb-run').style.borderColor = '#FFD700'; modal.querySelector('.sb-run').onclick = async () => { const code = modal.querySelector('.sb-in').value; const out = modal.querySelector('.sb-out'); if(!state.pyodide) return out.value = "Runtime Loading..."; try { state.pyodide.runPython("import sys; from io import StringIO; sys.stdout = StringIO()"); await state.pyodide.runPythonAsync(code); out.value = state.pyodide.runPython("sys.stdout.getvalue()"); } catch(e){ out.value = e; } }; modal.querySelector('.btn-close').onclick = () => modal.remove(); document.body.appendChild(modal); modal.classList.remove('hidden'); };
+            document.getElementById('launch-js').onclick = () => ELEMENTS.modals.js.classList.remove('hidden');
+            document.getElementById('launch-cpp').onclick = () => { const tpl = ELEMENTS.modals.template.content.cloneNode(true); const modal = tpl.querySelector('.modal-backdrop'); const title = modal.querySelector('.sb-title'); title.textContent = "C++ SANDBOX"; title.style.color = '#29ADFF'; modal.querySelector('.sb-in').value = '#include <iostream>\nint main() { std::cout << "Hello C++"; return 0; }'; modal.querySelector('.sb-run').onclick = () => runPiston('cpp', modal.querySelector('.sb-in').value, modal.querySelector('.sb-out')); modal.querySelector('.btn-close').onclick = () => modal.remove(); document.body.appendChild(modal); modal.classList.remove('hidden'); };
+            document.getElementById('launch-rust').onclick = () => { const tpl = ELEMENTS.modals.template.content.cloneNode(true); const modal = tpl.querySelector('.modal-backdrop'); const title = modal.querySelector('.sb-title'); title.textContent = "RUST SANDBOX"; title.style.color = '#FF4400'; modal.querySelector('.sb-run').style.borderColor='#FF4400'; modal.querySelector('.sb-run').style.color='#FF4400'; modal.querySelector('.sb-in').value = 'fn main() {\n    println!("Hello Rust");\n}'; modal.querySelector('.sb-run').onclick = () => runPiston('rust', modal.querySelector('.sb-in').value, modal.querySelector('.sb-out')); modal.querySelector('.btn-close').onclick = () => modal.remove(); document.body.appendChild(modal); modal.classList.remove('hidden'); };
+        });
+    </script>
+</body>
+</html>
