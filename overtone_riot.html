@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⫷ OVERTONE_RIOT ⫸</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06080b; --panel:#0b0f14; --panel2:#0e141b; --line:#1c2733;
+  --ink:#a7b6c2; --dim:#5c6b78; --bright:#e8f1f8;
+  --sub:#ff4d6d;   /* ⌬ sub / impact   */
+  --add:#ffb454;   /* ✦ additive       */
+  --tex:#4de3ff;   /* ✵ texture / wt   */
+  --anlg:#e8c261;  /* ◉ analog fx      */
+  --hyb:#6ee7c8;   /* ◈ hybrid fx      */
+  --dist:#ff5c8a;  /* ⚡ digital dist   */
+  --seq:#7dff9e;   /* ▦ sequencer      */
+  --flt:#b78aff;   /* ◍ filter         */
+  --mov:#b78bff;   /* ⌁ movement / lfo */
+  --mov2:#5ec8ff;  /* ⌁₂ movement / lfo 2 */
+  --warn:#ffd23f;  /* env / output     */
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;overscroll-behavior:none}
+body{display:flex;flex-direction:column}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
+  background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}
+h1,h2{font-family:'Chakra Petch',sans-serif;margin:0}
+
+/* ── header ─────────────────────────────────────────── */
+header{display:flex;align-items:center;gap:10px;padding:8px 12px;
+  border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:14px;letter-spacing:.12em;color:var(--bright);white-space:nowrap}
+header h1 b{color:var(--tex)}
+.faceArrow{cursor:default}
+body.embedded .faceArrow{cursor:pointer;color:var(--sub);text-shadow:0 0 10px rgba(67,255,164,.5)}
+body.embedded .faceArrow:active{opacity:.5}
+#scope{flex:1;height:38px;min-width:60px;background:#05070a;border:1px solid var(--line)}
+#pwr,#latMode{font-family:'Chakra Petch';letter-spacing:.12em;background:transparent;
+  color:var(--sub);border:1px solid var(--sub);padding:8px 14px;font-size:12px;cursor:pointer}
+#pwr.on{color:#06110a;background:#43ffa4;border-color:#43ffa4;
+  box-shadow:0 0 16px rgba(67,255,164,.45)}
+
+/* ── tabs ───────────────────────────────────────────── */
+nav{display:flex;gap:6px;padding:8px 12px 0;background:var(--bg)}
+nav button{flex:1;font-family:'Chakra Petch';letter-spacing:.12em;font-size:11px;
+  background:var(--panel);border:1px solid var(--line);color:var(--dim);
+  padding:8px 0;cursor:pointer}
+nav button.act{color:var(--bright);border-color:#31445a;background:var(--panel2)}
+main{flex:1;overflow-y:auto;padding:10px 12px 12px}
+.page{display:none;grid-template-columns:repeat(2,1fr);gap:10px}
+.page.act{display:grid}
+@media(max-width:700px){.page{grid-template-columns:1fr}}
+
+/* ── modules ────────────────────────────────────────── */
+.mod{border:1px solid var(--line);background:var(--panel);padding:10px 12px 12px}
+.mod h2{font-size:11px;letter-spacing:.16em;margin-bottom:2px}
+.mod .tag{font-size:9.5px;color:var(--dim);letter-spacing:.08em;margin-bottom:8px}
+.mod.m-sub{border-top:2px solid var(--sub)} .mod.m-sub h2{color:var(--sub)}
+.mod.m-add{border-top:2px solid var(--add)} .mod.m-add h2{color:var(--add)}
+.mod.m-tex{border-top:2px solid var(--tex)} .mod.m-tex h2{color:var(--tex)}
+.mod.m-mov{border-top:2px solid var(--mov)} .mod.m-mov h2{color:var(--mov)}
+.mod.m-glb{border-top:2px solid var(--warn)} .mod.m-glb h2{color:var(--warn)}
+.mod.m-anlg{border-top:2px solid var(--anlg)} .mod.m-anlg h2{color:var(--anlg)}
+.mod.m-hyb{border-top:2px solid var(--hyb)} .mod.m-hyb h2{color:var(--hyb)}
+.mod.m-dist{border-top:2px solid var(--dist)} .mod.m-dist h2{color:var(--dist)}
+.pRow{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;font-size:10px;color:var(--dim)}
+.pRow button,.pRow select,.pRow input[type=text]{background:var(--panel2);border:1px solid var(--line);
+  color:var(--ink);font:inherit;font-size:10px;padding:7px 10px;letter-spacing:0.06em;cursor:pointer}
+.pRow input[type=text]{cursor:text;min-width:110px}
+.pRow button:active{color:var(--bright);border-color:#31445a}
+.pRow button.rec{color:#ff4d6d;border-color:#ff4d6d55}
+.pRow button.rec.live{background:#ff4d6d22;animation:blink 1s steps(2) infinite}
+.mod.m-seq{border-top:2px solid var(--seq)} .mod.m-seq h2{color:var(--seq)}
+.mod.m-flt{border-top:2px solid var(--flt)} .mod.m-flt h2{color:var(--flt)}
+.ctl.c-flt .fill,.ctl.c-flt .tick{background:var(--flt)}
+.ctl.c-seq .fill,.ctl.c-seq .tick{background:var(--seq)}
+.pRow .ctl{flex:1;min-width:130px}
+.pGrp{display:inline-flex;flex-direction:column;gap:3px}
+.pGrp b{font-size:8px;font-weight:400;color:var(--dim);letter-spacing:0.12em}
+.pRow .hint{flex-basis:100%}
+#sqGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:10px}
+.sqPad{aspect-ratio:1;background:var(--panel2);border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:9px;color:var(--dim);cursor:pointer;touch-action:none;position:relative}
+.sqPad b{font-size:8px;opacity:0.55;font-weight:400}
+.sqPad.on{background:#173322;border-color:var(--seq);color:var(--seq)}
+.sqPad.acc{background:var(--seq);border-color:var(--seq);color:#04140a;
+  font-weight:700}
+.sqPad.acc b{color:#0a2416;opacity:0.8}
+.sqPad.play{outline:2px solid var(--seq);outline-offset:1px}
+.sqPad.ghost{opacity:0.22}
+#sqPlay.live{color:var(--seq);border-color:var(--seq)}
+@keyframes blink{50%{border-color:#ff4d6d}}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px}
+
+/* ── fader ──────────────────────────────────────────── */
+.ctl{width:calc(50% - 6px);min-width:104px}
+.ctl.big{width:100%}
+.ctl .lab{display:flex;justify-content:space-between;color:var(--dim);
+  font-size:9.5px;letter-spacing:.1em;margin-bottom:3px}
+.ctl .lab .val{color:var(--ink)}
+.ctl .trk{position:relative;height:26px;border:1px solid var(--line);
+  background:linear-gradient(180deg,#0a0f14,#080b0f);cursor:ew-resize;
+  touch-action:none;overflow:hidden}
+.ctl.big .trk{height:36px}
+.ctl .fill{position:absolute;inset:0;width:0%;background:var(--dim);opacity:.26}
+.ctl .tick{position:absolute;top:0;bottom:0;width:2px;background:var(--dim)}
+.ctl.c-sub .fill,.ctl.c-sub .tick{background:var(--sub)}
+.ctl.c-add .fill,.ctl.c-add .tick{background:var(--add)}
+.ctl.c-tex .fill,.ctl.c-tex .tick{background:var(--tex)}
+.ctl.c-mov .fill,.ctl.c-mov .tick{background:var(--mov)}
+.ctl.c-warn .fill,.ctl.c-warn .tick{background:var(--warn)}
+.ctl.c-anlg .fill,.ctl.c-anlg .tick{background:var(--anlg)}
+.ctl.c-hyb .fill,.ctl.c-hyb .tick{background:var(--hyb)}
+.ctl.c-dist .fill,.ctl.c-dist .tick{background:var(--dist)}
+.ctl .mdot{position:absolute;right:4px;top:2px;font-size:9px;color:var(--mov);display:none}
+.ctl.routed .mdot{display:block}
+body.assign .ctl .trk{border-color:var(--mov);animation:bl .8s steps(2) infinite}
+@keyframes bl{50%{border-color:var(--line)}}
+
+/* ── partial sculptor ───────────────────────────────── */
+#partials{width:100%;height:110px;touch-action:none;background:#05070a;
+  border:1px solid var(--line);cursor:crosshair;display:block}
+.hint{color:var(--dim);font-size:9.5px;margin-top:5px;letter-spacing:.05em}
+.presetRow{display:flex;gap:5px;margin:7px 0;flex-wrap:wrap}
+.presetRow button{background:transparent;border:1px solid var(--line);color:var(--dim);
+  font:inherit;font-size:9.5px;padding:4px 8px;cursor:pointer;letter-spacing:.06em}
+.presetRow button:hover{color:var(--add);border-color:var(--add)}
+
+/* ── movement / routing ─────────────────────────────── */
+.movHead{display:flex;gap:12px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+#moveDial,#moveDial2{width:64px;height:64px;flex:0 0 64px;border-radius:50%;
+  border:2px solid var(--mov);background:radial-gradient(circle at 40% 35%,#1a1426,#0b0812);
+  color:var(--mov);font-family:'Chakra Petch';font-size:9px;letter-spacing:.08em;
+  cursor:pointer;position:relative;box-shadow:inset 0 0 18px rgba(183,139,255,.15)}
+#moveDial2{border-color:var(--mov2);color:var(--mov2);
+  box-shadow:inset 0 0 18px rgba(120,200,255,.15)}
+#moveDial.armed{animation:pl 1s infinite}
+#moveDial2.armed{animation:pl2 1s infinite}
+@keyframes pl{50%{box-shadow:0 0 26px rgba(183,139,255,.85)}}
+@keyframes pl2{50%{box-shadow:0 0 26px rgba(120,200,255,.85)}}
+#moveDial .ntick,#moveDial2 .ntick2{position:absolute;left:50%;top:3px;width:2px;height:9px;
+  background:var(--mov);transform-origin:1px 29px}
+#moveDial2 .ntick2{background:var(--mov2)}
+#assignHint{font-size:9.5px;color:var(--mov);flex:1;line-height:1.5;min-width:140px}
+#routes{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.route{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--dim)}
+.route .rn{flex:1;min-width:70px;color:var(--ink);overflow:hidden;white-space:nowrap}
+.route .rsrc{background:none;border:1px solid var(--mov);color:var(--mov);
+  cursor:pointer;font:inherit;font-size:9px;padding:1px 5px;border-radius:2px;flex:0 0 auto}
+.route .rx{background:none;border:1px solid var(--line);color:var(--dim);
+  cursor:pointer;font:inherit;padding:1px 6px;flex:0 0 auto}
+.route input[type=range]{flex:1;min-width:50px;accent-color:var(--mov);height:14px}
+
+/* ── drop zone ──────────────────────────────────────── */
+#drop{border:1px dashed var(--line);padding:9px;text-align:center;
+  color:var(--dim);font-size:9.5px;margin-top:8px;cursor:pointer}
+#drop.over{border-color:var(--tex);color:var(--tex)}
+
+/* ── engine info ────────────────────────────────────── */
+#engInfo{font-size:9.5px;color:var(--dim);line-height:1.65;margin-top:10px}
+#engInfo b{color:var(--warn)}
+
+/* ── keyboard + footer ──────────────────────────────── */
+#kbd{position:relative;display:flex;height:104px;border-top:1px solid var(--line);
+  background:#05070a;touch-action:none;flex:0 0 auto}
+.key{flex:1;border-right:1px solid var(--line);position:relative;
+  background:linear-gradient(#0e141b,#0a0e13);color:var(--dim);
+  display:flex;align-items:flex-end;justify-content:center;font-size:9px;padding-bottom:5px}
+.key.blk{position:absolute;width:7%;height:56%;top:0;z-index:2;
+  border:1px solid var(--line);background:#03050a;padding-bottom:3px}
+.key.dn{background:linear-gradient(rgba(77,227,255,.35),rgba(77,227,255,.08));color:var(--bright)}
+.key.blk.dn{background:rgba(77,227,255,.4)}
+footer{display:flex;align-items:center;gap:10px;padding:5px 12px;color:var(--dim);
+  font-size:9.5px;border-top:1px solid var(--line);background:var(--panel);flex:0 0 auto}
+footer .oct{display:flex;gap:4px;align-items:center}
+footer .oct button{background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+  font:inherit;padding:2px 9px;cursor:pointer}
+#stat{flex:1;text-align:right;letter-spacing:.05em}
+#stat b{color:var(--tex)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="faceArrow" data-dir="-1">⫷</span> OVERTONE<b>_RIOT</b> <span class="faceArrow" data-dir="1">⫸</span></h1>
+  <canvas id="scope"></canvas>
+  <button id="latMode" title="audio buffer size — STABLE trades latency for headroom"></button>
+  <button id="pwr">⏻ POWER</button>
+</header>
+
+<nav>
+  <button id="tabM" class="act">✦ MACRO DASHBOARD</button>
+  <button id="tabE">⌬ ENGINE ROOM</button>
+  <button id="tabF">✣ FX RACK</button>
+</nav>
+
+<main>
+  <!-- ═════════ MACRO ═════════ -->
+  <div id="pgM" class="page act">
+    <div class="mod m-sub">
+      <h2>⌬ SUB / IMPACT</h2><div class="tag">low-end weight · fold + 808 drop hardwired</div>
+      <div class="row" id="mSub"></div>
+    </div>
+    <div class="mod m-add">
+      <h2>✦ HARMONIC SCULPTOR</h2><div class="tag">draw the overtone array · no filter</div>
+      <canvas id="partials"></canvas>
+      <div class="hint">drag to sculpt · partial 1 → 16 · double-tap = saw ramp</div>
+      <div class="presetRow">
+        <button data-hp="odd">ODD·METAL</button>
+        <button data-hp="even">EVEN·CHORAL</button>
+        <button data-hp="saw">SAW·FULL</button>
+        <button data-hp="fund">FUNDAMENT</button>
+      </div>
+      <div class="row" id="mAdd"></div>
+    </div>
+    <div class="mod m-tex">
+      <h2>✵ TEXTURE / WAVETABLE</h2><div class="tag">granular table riding over sub + harmonics</div>
+      <div class="row" id="mTex"></div>
+      <div id="drop">❃ drop a sample here (or tap to browse) → becomes the wavetable</div>
+    </div>
+    <div class="mod m-flt">
+      <h2>◍ FILTER</h2><div class="tag">TPT multimode · pre-distortion · ENV⇄CUT rides your hits (center = off) — route a MOVE LFO to CUTOFF for sweeps</div>
+      <div class="row" id="fFlt"></div>
+    </div>
+    <div class="mod m-mov">
+      <h2>⌁ MOVEMENT</h2><div class="tag">two LFOs · one-touch modulation · no cables</div>
+      <div class="movHead">
+        <button id="moveDial"><div class="ntick"></div>MOVE 1</button>
+        <button id="moveDial2"><div class="ntick2"></div>MOVE 2</button>
+        <div id="assignHint">tap <b>MOVE 1</b> or <b>MOVE 2</b>, then tap any fader to link
+          that LFO. Each linked row shows L1/L2 (tap to switch), a depth slider, and ✕ to unlink.</div>
+      </div>
+      <div class="row" id="mLfo"></div>
+      <div class="row" id="mLfo2"></div>
+      <div id="routes"></div>
+    </div>
+    <div class="mod m-seq">
+      <h2>▦ STEP SEQUENCER</h2><div class="tag">tap a pad: 1st tap = ON · 2nd tap = ACCENT (solid) · 3rd = off · drag ↕ to pitch · audio-thread clock</div>
+      <div class="pRow">
+        <button id="sqPlay">▶ PLAY</button>
+        <div class="ctl c-seq" id="sqBpm"></div>
+        <div class="ctl c-seq" id="sqSw"></div>
+        <div class="ctl c-seq" id="sqLen"></div>
+      </div>
+      <div id="sqGrid"></div>
+    </div>
+    <div class="mod m-glb">
+      <h2>⛃ PATCH BAY</h2><div class="tag">save · recall · share — patches survive the power switch</div>
+      <div class="pRow">
+        <input type="text" id="pName" placeholder="patch name" maxlength="24">
+        <button id="pSave">⛃ SAVE</button>
+        <select id="pList"></select>
+        <button id="pLoad">⌁ LOAD</button>
+        <button id="pDel">✕</button>
+      </div>
+      <div class="pRow">
+        <button id="pExport">⇓ EXPORT .JSON</button>
+        <button id="pImport">⇑ IMPORT</button>
+        <button id="pLink">⧉ COPY LINK</button>
+        <input type="file" id="pFile" accept=".json,application/json" hidden>
+      </div>
+      <div id="pMsg" class="hint">patches capture every fader + all MOVE routes</div>
+    </div>
+    <div class="mod m-glb">
+      <h2>⏺ CAPTURE</h2><div class="tag">32-bit float WAV export — record live, or bounce a deterministic one-shot</div>
+      <div class="pRow">
+        <button id="recBtn" class="rec">⏺ RECORD</button><span id="recT"></span>
+        <span class="hint">records exactly what you hear — keys, sequencer, FX</span>
+      </div>
+      <div class="pRow">
+        <span class="pGrp"><b>NOTE</b><select id="bNote"></select></span>
+        <span class="pGrp"><b>HOLD s</b><select id="bHold"><option>0.1</option><option>0.25</option><option selected>0.5</option><option>1</option><option>2</option><option>4</option></select></span>
+        <span class="pGrp"><b>TAIL s</b><select id="bTail"><option>0.25</option><option>0.5</option><option selected>1</option><option>2</option><option>4</option><option>8</option></select></span>
+        <span class="pGrp"><b>RATE Hz</b><select id="bRate"><option>44100</option><option selected>48000</option><option>96000</option></select></span>
+        <button id="bGo">⇓ ONESHOT WAV</button>
+        <span class="hint">oneshot = a single pitched hit of the current patch — for sample packs</span>
+      </div>
+      <div class="pRow">
+        <span class="pGrp"><b>BARS</b><select id="lBars"><option>1</option><option selected>2</option><option>4</option><option>8</option></select></span>
+        <span class="pGrp"><b>TAIL s</b><select id="lTail"><option value="cut">cut (seamless)</option><option value="0.5">0.5</option><option value="1" selected>1</option><option value="2">2</option><option value="4">4</option></select></span>
+        <button id="lGo">⇓ LOOP WAV</button>
+        <span class="hint">renders the sequence · stops at the bar line — tail only captures FX decay</span>
+      </div>
+      <div id="capMsg" class="hint"></div>
+    </div>
+  </div>
+
+  <!-- ═════════ ENGINE ROOM ═════════ -->
+  <div id="pgE" class="page">
+    <div class="mod m-sub">
+      <h2>⌬ SUB ROOM</h2><div class="tag">impact internals</div>
+      <div class="row" id="eSub"></div>
+    </div>
+    <div class="mod m-tex">
+      <h2>✵ TEXTURE ROOM</h2><div class="tag">table read internals</div>
+      <div class="row" id="eTex"></div>
+    </div>
+    <div class="mod m-glb">
+      <h2>✧ ENVELOPE</h2><div class="tag">shared amplitude contour</div>
+      <div class="row" id="eEnv"></div>
+    </div>
+    <div class="mod m-glb">
+      <h2>✧ OUTPUT</h2><div class="tag">final stage</div>
+      <div class="row" id="eGlb"></div>
+      <div id="engInfo">CORE: <b id="coreKind">—</b> · BRIDGE: <b id="bridgeKind">—</b><br>
+        Drop <b>pkg/dsp_core_bg.wasm</b> next to this file (wasm-pack build --target web
+        --release) and the worklet hot-loads the Rust core; otherwise the built-in JS
+        reference core runs — same math, line for line. Serve with COOP/COEP headers
+        (see serve.py) to enable the SharedArrayBuffer bridge.</div>
+    </div>
+  </div>
+
+  <!-- ═══ page: FX RACK ═══ -->
+  <div id="pgF" class="page">
+    <div class="mod m-anlg">
+      <h2>◉ ANALOG</h2><div class="tag">6-stage phaser · dual-tap chorus · sine tremolo — DRIFT adds thermal instability to every LFO</div>
+      <div class="row" id="fPh"></div>
+      <div class="row" id="fCho"></div>
+    </div>
+    <div class="mod m-hyb">
+      <h2>◈ HYBRID</h2><div class="tag">tape-glide delay ⇄ FDN reverb — BLEED feeds the repeats into the tail so echoes dissolve into space</div>
+      <div class="row" id="fDly"></div>
+      <div class="row" id="fVrb"></div>
+    </div>
+    <div class="mod m-dist">
+      <h2>⚡ DIGITAL DISTORTION</h2><div class="tag">six circuits · SCREAM = biased tanh with a resonant feedback howl that rides the signal envelope</div>
+      <div class="row" id="fDst"></div>
+      <div class="hint">every fader here is MOVE-routable — try LFO → TIME for tape warble, LFO → TONE in SCREAM for talking howls</div>
+    </div>
+  </div>
+</main>
+
+<div id="kbd"></div>
+<footer>
+  <div class="oct">OCT <button id="octDn">◂</button><span id="octV">3</span><button id="octUp">▸</button></div>
+  <span>Z / X = octave · keys A W S E D F T G Y H U J K</span>
+  <span id="stat">STANDBY</span>
+</footer>
+
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════════════
+   OVERTONE_RIOT — merged build
+   ─ UI thread (below) .......... chrome, one-touch routing, param writes
+                                  via SharedArrayBuffer when the page is
+                                  crossOriginIsolated; port messages
+                                  otherwise.
+   ─ Audio thread (WORKLET_SRC) . the DSP core. On boot it attempts to
+                                  instantiate pkg/dsp_core_bg.wasm (the
+                                  Rust core, dsp_core.rs). If absent or
+                                  incompatible it runs the JS reference
+                                  implementation — a line-for-line twin.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const WASM_URL = "pkg/dsp_core_bg.wasm";
+
+/* ── shared parameter map — index-locked to PDEF in dsp_core.rs ──────── */
+const PARAMS = [
+ /* 0*/{k:"subLevel", n:"WEIGHT",      min:0,max:1,      d:0.85,c:"lin",e:"sub"},
+ /* 1*/{k:"subMorph", n:"SINE ∿ → △ FOLD",min:0,max:1,   d:0.25,c:"lin",e:"sub"},
+ /* 2*/{k:"subDrive", n:"FOLD DRIVE",  min:0,max:1,      d:0.30,c:"lin",e:"sub"},
+ /* 3*/{k:"pDrop",    n:"PITCH DROP",  min:0,max:1,      d:0.45,c:"lin",e:"sub"},
+ /* 4*/{k:"pDec",     n:"DROP DECAY",  min:0.005,max:0.4,d:0.06,c:"exp",e:"sub",u:"s"},
+ /* 5*/{k:"trLevel",  n:"TRANSIENT CLICK",min:0,max:1,   d:0.4, c:"lin",e:"sub"},
+ /* 6*/{k:"trDec",    n:"CLICK DECAY", min:0.002,max:0.08,d:0.015,c:"exp",e:"sub",u:"s"},
+ /* 7*/{k:"addLevel", n:"LEVEL",       min:0,max:1,      d:0.6, c:"lin",e:"add"},
+ /* 8*/{k:"addTilt",  n:"SPECTRAL TILT ◂▸",min:0,max:1,  d:0.5, c:"lin",e:"add"},
+ /* 9*/{k:"addSpread",n:"INHARM ⌁",    min:0,max:1,      d:0.0, c:"lin",e:"add"},
+].concat(
+ [...Array(16)].map((_,n)=>({k:"h"+(n+1),n:"H"+(n+1),min:0,max:1,
+   d:[1,.5,.33,.25][n]||0,c:"lin",e:"add",hide:1})),
+[
+ /*26*/{k:"texLevel", n:"LEVEL",       min:0,max:1,      d:0.45,c:"lin",e:"tex"},
+ /*27*/{k:"texMorph", n:"TABLE MORPH", min:0,max:1,      d:0.3, c:"lin",e:"tex"},
+ /*28*/{k:"texGrain", n:"GRAIN ⌁",     min:0,max:1,      d:0.15,c:"lin",e:"tex"},
+ /*29*/{k:"texDetune",n:"DETUNE",      min:0,max:1,      d:0.2, c:"lin",e:"tex"},
+ /*30*/{k:"ampA",n:"ATTACK", min:0.001,max:2,d:0.005,c:"exp",e:"warn",u:"s"},
+ /*31*/{k:"ampD",n:"DECAY",  min:0.02, max:4,d:0.35, c:"exp",e:"warn",u:"s"},
+ /*32*/{k:"ampS",n:"SUSTAIN",min:0,max:1,    d:0.6,  c:"lin",e:"warn"},
+ /*33*/{k:"ampR",n:"RELEASE",min:0.02, max:6,d:0.3,  c:"exp",e:"warn",u:"s"},
+ /*34*/{k:"lfoRate", n:"RATE",  min:0.05,max:30,d:2.5,c:"exp",e:"mov",u:"Hz"},
+ /*35*/{k:"lfoDepth",n:"DEPTH", min:0,max:1,    d:0.5,c:"lin",e:"mov"},
+ /*36*/{k:"lfoShape",n:"SHAPE ∿△⋀⁙",min:0,max:3,d:0,  c:"step",e:"mov"},
+ /*37*/{k:"master",  n:"MASTER",min:0,max:1,    d:0.8,c:"lin",e:"warn"},
+ /*38*/{k:"lfo2Rate", n:"RATE 2",  min:0.05,max:30,d:0.5,c:"exp",e:"mov",u:"Hz"},
+ /*39*/{k:"lfo2Depth",n:"DEPTH 2", min:0,max:1,    d:0.5,c:"lin",e:"mov"},
+ /*40*/{k:"lfo2Shape",n:"SHAPE 2 ∿△⋀⁙",min:0,max:3,d:1,  c:"step",e:"mov"},
+ /* ═ FX RACK ═ */
+ /*41*/{k:"phMix",  n:"PHASE MIX",   min:0,max:1,   d:0,   c:"lin",e:"anlg"},
+ /*42*/{k:"phRate", n:"PHASE RATE",  min:0.05,max:8,d:0.4, c:"exp",e:"anlg",u:"Hz"},
+ /*43*/{k:"phFdbk", n:"PHASE REGEN", min:0,max:0.9, d:0.5, c:"lin",e:"anlg"},
+ /*44*/{k:"choMix", n:"CHORUS MIX",  min:0,max:1,   d:0,   c:"lin",e:"anlg"},
+ /*45*/{k:"choRate",n:"CHORUS RATE", min:0.1,max:5, d:0.8, c:"exp",e:"anlg",u:"Hz"},
+ /*46*/{k:"choDep", n:"CHORUS DEPTH",min:0,max:1,   d:0.5, c:"lin",e:"anlg"},
+ /*47*/{k:"tremDep",n:"SINE LEVEL ∿",min:0,max:1,   d:0,   c:"lin",e:"anlg"},
+ /*48*/{k:"tremRate",n:"SINE RATE",  min:0.5,max:12,d:5,   c:"exp",e:"anlg",u:"Hz"},
+ /*49*/{k:"drift",  n:"DRIFT ⌇",     min:0,max:1,   d:0.15,c:"lin",e:"anlg"},
+ /*50*/{k:"dlyMix", n:"DELAY MIX",   min:0,max:1,   d:0,   c:"lin",e:"hyb"},
+ /*51*/{k:"dlyTime",n:"TIME",        min:0.02,max:1.2,d:0.35,c:"exp",e:"hyb",u:"s"},
+ /*52*/{k:"dlyFdbk",n:"FEEDBACK",    min:0,max:0.95,d:0.4, c:"lin",e:"hyb"},
+ /*53*/{k:"dlyCol", n:"COLOR ◂▸",    min:0,max:1,   d:0.6, c:"lin",e:"hyb"},
+ /*54*/{k:"vrbMix", n:"VERB MIX",    min:0,max:1,   d:0,   c:"lin",e:"hyb"},
+ /*55*/{k:"vrbSize",n:"SIZE",        min:0,max:1,   d:0.5, c:"lin",e:"hyb"},
+ /*56*/{k:"vrbDec", n:"DECAY",       min:0,max:1,   d:0.5, c:"lin",e:"hyb"},
+ /*57*/{k:"bleed",  n:"BLEED ⇄",     min:0,max:1,   d:0.3, c:"lin",e:"hyb"},
+ /*58*/{k:"dstDrive",n:"DRIVE",      min:0,max:1,   d:0.35,c:"lin",e:"dist"},
+ /*59*/{k:"dstMode",n:"CIRCUIT",     min:0,max:5,   d:0,   c:"step",e:"dist",
+        labels:["▙ CLIP","⎍ PUSH A/B","▣ IC","◉ COMP","⁘ CRUSH","⚡ SCREAM"]},
+ /*60*/{k:"dstTone",n:"TONE ◂▸",     min:0,max:1,   d:0.5, c:"lin",e:"dist"},
+ /*61*/{k:"dstBias",n:"BIAS ⚡",      min:0,max:1,   d:0.5, c:"lin",e:"dist"},
+ /*62*/{k:"dstMix", n:"MIX",         min:0,max:1,   d:0,   c:"lin",e:"dist"},
+ /* ═ FILTER (pre-distortion, TPT SVF) ═ */
+ /*63*/{k:"fltCut", n:"CUTOFF",      min:20,max:18000,d:18000,c:"exp",e:"flt",u:"Hz"},
+ /*64*/{k:"fltRes", n:"RESONANCE",   min:0,max:1,   d:0.15,c:"lin",e:"flt"},
+ /*65*/{k:"fltMode",n:"MODE ⇋ MORPH", min:0,max:3,  d:0,   c:"morph",e:"flt",
+        /* continuous topology morph: the TPT SVF computes every tap each
+           sample anyway — this crossfades them instead of switching. Saved
+           patches sit on exact detents → pure modes, bit-identical.
+           Route an LFO here for the liquid sweep (no more topology pops). */
+        labels:["▂ LP","◠ BP","▔ HP","⌒ NOTCH"]},
+ /*66*/{k:"fltEnv", n:"ENV ⇄ CUT",   min:0,max:1,   d:0.5, c:"lin",e:"flt"},
+ /*67*/{k:"fltSlope",n:"SLOPE",      min:0,max:2,   d:0,   c:"step",e:"flt",
+        /* serial TPT cascade: 1/2/4 stages. Resonance governor scales res
+           by 1.0/0.7/0.45 per MΛVΞRICK spec so stacked stages can't
+           amplitude-explode. 12dB = the original single stage, bit-compat. */
+        labels:["12dB/oct","24dB/oct","48dB/oct"]},
+ /*68*/{k:"duck",   n:"DUCK ⤓TAILS", min:0,max:1,   d:0,   c:"lin",e:"hyb"},
+ /* MΛVΞRICK §III Acoustic Vector: dry hits duck the delay/verb returns —
+    3ms attack, ~140ms release. Transients stay on top of their own wash. */
+]);
+const NP = PARAMS.length; // 69 — index-locked to PDEF in dsp_core.rs (also 69)
+const norm = (p,v)=> p.c==="exp" ? Math.log(v/p.min)/Math.log(p.max/p.min)
+                                 : (v-p.min)/(p.max-p.min);
+
+/* ═══════════════════ WORKLET / DSP CORE ═══════════════════
+   No backticks or ${} inside — shipped as one template string.
+   The JS path is the reference implementation of dsp_core.rs;
+   the Wasm path calls the wasm-bindgen exports directly.      */
+const WORKLET_SRC = `
+const PDEF = ` + JSON.stringify(PARAMS.map(p=>({min:p.min,max:p.max,c:p.c}))) + `;
+const STEPPED = PDEF.map(p=>p.c==="step");       /* modes/shapes must snap, not glide */
+const NP = ` + NP + `, TAU = 6.283185307179586, NVOICE = 8, FRAME = 2048;
+function mapP(i, x){ const p = PDEF[i]; x = x<0?0:(x>1?1:x);
+  return p.c==='exp' ? p.min*Math.pow(p.max/p.min, x) : p.min + (p.max-p.min)*x; }
+
+/* factory wavetable: 6 frames — sine, saw, square, comb, inharmonic, FM-vox */
+function makeFactoryTable(){
+  const nf = 6, t = new Float32Array(nf*FRAME);
+  for(let f=0; f<nf; f++) for(let i=0; i<FRAME; i++){
+    const ph = i/FRAME; let v = 0;
+    if(f===0) v = Math.sin(TAU*ph);
+    else if(f===1){ for(let n=1;n<=32;n++) v += Math.sin(TAU*ph*n)/n; v*=0.55; }
+    else if(f===2){ for(let n=1;n<=31;n+=2) v += Math.sin(TAU*ph*n)/n; v*=0.7; }
+    else if(f===3){ for(let n=1;n<=24;n++) v += Math.sin(TAU*ph*n)*Math.sin(n*0.9)/n; v*=0.8; }
+    else if(f===4){ const P=[1,2.76,5.4,8.93,13.3]; for(let k=0;k<5;k++) v += Math.sin(TAU*ph*P[k])/(k+1); v*=0.5; }
+    else { const F=[3,5,8,12], A=[1,.7,.45,.3]; for(let k=0;k<4;k++) v += A[k]*Math.sin(TAU*ph*F[k]+Math.sin(TAU*ph)*2); v*=0.4; }
+    t[f*FRAME+i] = v;
+  }
+  return {data:t, frames:nf};
+}
+
+class RiotCore extends AudioWorkletProcessor {
+  constructor(opts){
+    super();
+    const o = opts.processorOptions || {};
+    this.p = o.sab ? new Float32Array(o.sab) : new Float32Array(NP);
+    if(o.init) this.p.set(o.init);
+    /* Offline-render bootstrap: OfflineAudioContext does NOT guarantee port
+       messages posted before startRendering() arrive before rendering, so
+       bounces pass routes / sequence / trigger here — delivered synchronously
+       at construction. Realtime keeps using port messages. */
+    this.bootRoutes = o.routes || null;          /* applied after core selection */
+    if(o.seq) this.seq = o.seq;
+    this.pendingNote = o.autoNote || null;       /* [note, vel, holdSamples] */
+    this.pendingTable = o.table || null;         /* {data, nf} — dropped wavetable */
+    this.routes = [];
+    this.q = new Float64Array(NP);
+    this.w = new Float64Array(16);
+    this.tbl = makeFactoryTable();
+    this.lfoPh = 0; this.sh = 0; this.shPh = 1;
+    this.lfo2Ph = 0; this.sh2 = 0; this.sh2Ph = 1;
+    this.voices = [];
+    for(let v=0; v<NVOICE; v++) this.voices.push({
+      on:false, gate:false, note:0, f0:0, vel:1, age:0, t:0,
+      phS:0, phA:new Float64Array(16), phT:0, phT2:0,
+      gFade:1, gCnt:0, env:0, stage:0, pn:0, trSamp:0 });
+    /* steal fade-pool: 2 snapshot slots that render a stolen voice down to
+       silence (<2ms forced kill, stage 5) so the slot swap has no amplitude
+       discontinuity. Never allocated by noteOn — only written by a steal. */
+    this.tails = [];
+    for(let t=0; t<2; t++) this.tails.push({
+      on:false, gate:false, note:0, f0:0, vel:1, age:0, t:0,
+      phS:0, phA:new Float64Array(16), phT:0, phT2:0,
+      gFade:1, gCnt:0, env:0, stage:0, pn:0, trSamp:0 });
+    this.pool = this.voices.concat(this.tails);   /* render/count iterates this */
+
+    /* ═ FX RACK state — distortion → analog → hybrid, post voice-sum ═ */
+    this.fx = {
+      rng: 0x51F15EED,                    /* dedicated xorshift: keeps the voice
+                                             noise stream identical to pre-FX builds */
+      drift: 0,
+      phPh: 0, apX: new Float64Array(6), apY: new Float64Array(6), phFb: 0,
+      cho: new Float32Array(8192), choW: 0, choPh: 0,
+      tremPh: 0,
+      dly: new Float32Array(131072), dlyW: 0, dlyLp: 0, dlySmp: 4800,
+      ap1: new Float32Array(512), ap1i: 0, ap2: new Float32Array(1024), ap2i: 0,
+      vb0: new Float32Array(16384), vb1: new Float32Array(16384),
+      vb2: new Float32Array(16384), vb3: new Float32Array(16384),
+      vi0: 0, vi1: 0, vi2: 0, vi3: 0,
+      vlp0: 0, vlp1: 0, vlp2: 0, vlp3: 0,
+      vl0: 1687, vl1: 2039, vl2: 2503, vl3: 3023,
+      dcX: 0, dcY: 0, icY: 0, cmpEnv: 0,
+      scrLp: 0, scrBp: 0, scrEnv: 0,
+      crushHold: 0, crushCnt: 0, toneLp: 0,
+      fIc1: [0,0,0,0], fIc2: [0,0,0,0], fEnv: 0,/* ◍ TPT cascade integrators (≤4
+                                                     stages) + env follower */
+      dkEnv: 0                                  /* ⤓ sidechain follower */
+    };
+    this.qs = new Float32Array(NP); this.qsInit = false;  /* smoothed params */
+    this.pCap = 16;                              /* smoothed partial cap */
+    this.rmp = {init:false, sub:0, add:0, tex:0, mas:0, fm:0,
+                a1:0, a2:0, a3:0, k:1, fmode:0}; /* per-sample ramp anchors */
+    this.rec = null; this.recN = 0;              /* ⏺ capture buffer */
+    this.holdCnt = 0; this.holdNote = 0;         /* sample-accurate bounce gate */
+    this.seq = this.seq || null;                 /* ▦ sequencer (may be set above) */
+    this.seqStep = 15; this.seqNext = 0;         /* step cursor + samples to boundary */
+    this.seqGate = 0; this.seqNote = -1;         /* per-step gate countdown */
+    this.seqCount = 0;                           /* steps fired (for stopAfter) */
+
+    /* ── optional Rust core: sync-instantiate dsp_core_bg.wasm ── */
+    this.wasm = null;
+    if(o.wasmBytes){
+      try{
+        /* stub every import, but wire random() for real — wasm-bindgen's
+           mangled Math.random import returning 0 would silently kill S&H
+           noise in the Rust core with no error */
+        const imp = new Proxy({}, {get:()=>new Proxy({}, {get:(_,name)=>
+          (typeof name==='string' && name.indexOf('random')>=0)
+            ? ()=>Math.random() : ()=>0 })});
+        const inst = new WebAssembly.Instance(new WebAssembly.Module(o.wasmBytes), imp);
+        const x = inst.exports;
+        const core = x.riotcore_new(sampleRate);
+        const outPtr = x.riotcore_out_ptr ? x.riotcore_out_ptr(core) : 0;
+        if(!outPtr) throw new Error('core lacks out_ptr export — rebuild pkg');
+        this.wasm = { x, core, outPtr,
+          mem: ()=> x.memory.buffer,
+          pView: null, oView: null,
+          refresh(){ this.pView = new Float32Array(this.mem(), x.riotcore_params_ptr(this.core), NP);
+                     this.oView = new Float32Array(this.mem(), this.outPtr, 128); } };
+        this.wasm.refresh();
+      }catch(err){ this.wasm = null; }
+    }
+    this.port.postMessage(['e', this.wasm ? 'RUST/WASM' : 'JS-REF']);
+
+    this.port.onmessage = (e)=>{ const m = e.data;
+      if(m[0]==='p') this.p[m[1]] = m[2];
+      else if(m[0]==='n') this.noteOn(m[1], m[2]);
+      else if(m[0]==='f') this.noteOff(m[1]);
+      else if(m[0]==='r'){ this.routes = m[1]; this.pushRoutesWasm(); }
+      else if(m[0]==='t') this.setTable(m[1], m[2]);
+      else if(m[0]==='panic') this.panic();
+      else if(m[0]==='rec'){                     /* ⏺ live capture on/off */
+        if(m[1]){ this.rec=[]; this.recN=0; }
+        else if(this.rec){ const c=this.rec; this.rec=null;
+          this.port.postMessage(['recdata',c,sampleRate], c.map(a=>a.buffer)); }
+      }
+      else if(m[0]==='hold'){ this.holdCnt=m[1]; this.holdNote=m[2]; }
+      else if(m[0]==='seq'){                     /* ▦ full pattern/transport state */
+        const was = this.seq && this.seq.on;
+        this.seq = m[1];
+        if(was && !this.seq.on){                 /* stopping: choke the loop note */
+          if(this.seqNote>=0){ this.noteOff(this.seqNote); this.seqNote=-1; }
+        }
+        if(!was && this.seq.on){ this.seqStep=15; this.seqNext=0; this.seqGate=0; this.seqCount=0; }
+      }
+    };
+  }
+
+  pushRoutesWasm(){
+    if(!this.wasm) return;
+    const x = this.wasm.x, c = this.wasm.core;
+    /* 4th arg (LFO source 0|1) — old 3-arg cores ignore the extra arg */
+    this.routes.forEach((r,k)=> x.riotcore_set_route(c, k, r.i, r.d, r.s||0));
+    x.riotcore_set_route_count(c, this.routes.length);
+  }
+  setTable(data, nf){
+    this.tbl = {data, frames:nf};
+    if(this.wasm){ const x=this.wasm.x, c=this.wasm.core;
+      const ptr = x.riotcore_table_ptr(c);
+      /* clamp to the Rust core's buffer capacity — blindly writing
+         data.length floats stomps arbitrary wasm memory if the core
+         allocated fewer frames than the drop produced */
+      const cap = x.riotcore_table_capacity ? x.riotcore_table_capacity(c)
+                                            : data.length;
+      const len = Math.min(data.length, cap);
+      const nfW = Math.min(nf, (len/FRAME)|0);
+      if(nfW >= 2){
+        new Float32Array(this.wasm.mem(), ptr, len).set(data.subarray(0,len));
+        x.riotcore_set_table_frames(c, nfW); this.wasm.refresh();
+      } /* else: table too small for the core's layout — JS tbl still updated */
+    }
+  }
+  panic(){
+    this.seqNote=-1; this.seqGate=0;
+    for(const v of this.pool){ v.on=false; v.stage=0; v.env=0; }
+    if(this.wasm) this.wasm.x.riotcore_panic(this.wasm.core);
+  }
+  noteOn(note, vel){
+    if(this.wasm){ this.wasm.x.riotcore_note_on(this.wasm.core, note, vel); return; }
+    let v = this.voices.find(v=>!v.on);
+    if(!v){                                      /* steal: prefer a releasing
+         voice (quietest first), oldest as last resort
+         (mirrored in dsp_core.rs::note_on) */
+      let rel=null;
+      for(const c of this.voices)
+        if(c.stage===4 && (!rel || c.env<rel.env)) rel=c;
+      v = rel || this.voices.reduce((a,b)=>a.age<b.age?a:b);
+      /* snapshot the dying voice into a fade-pool slot: it keeps rendering
+         with a forced ~1.2ms kill so the swap has no step discontinuity.
+         Skip if it's already inaudible — don't burn a slot on silence. */
+      if(v.env > 1e-3){
+        let t = this.tails.find(t=>!t.on);
+        if(!t){ t = this.tails[0];               /* both busy: overwrite quietest */
+          for(const c of this.tails) if(c.env < t.env) t = c; }
+        t.on=true; t.gate=false; t.note=v.note; t.f0=v.f0; t.vel=v.vel;
+        t.age=v.age; t.t=v.t; t.phS=v.phS; t.phA.set(v.phA);
+        t.phT=v.phT; t.phT2=v.phT2; t.gFade=v.gFade; t.gCnt=v.gCnt;
+        t.env=v.env; t.pn=v.pn; t.stage=5;
+        t.trSamp=0;                              /* noise has no phase to preserve —
+                                                    don't double the click burst */
+      }
+    }
+    v.on = true; v.gate = true; v.note = note; v.vel = vel;
+    v.f0 = 440*Math.pow(2,(note-69)/12);
+    v.t = 0; v.age = currentTime; v.stage = 1;
+    v.phS = 0; v.phT = Math.random(); v.phT2 = Math.random();
+    v.phA.fill(0); v.gFade = 1; v.gCnt = 0; v.pn = 0; v.env = 0;
+    // Transient click gets a HARD sample budget, set only here on note start.
+    // It can only count DOWN — nothing in the process loop can re-arm it — so
+    // the noise burst physically cannot get stuck on or leak across rapid
+    // retriggers (fast 808 lines). Budget scales with current click decay.
+    v.trSamp = Math.max(1, (mapP(6, this.p[6]) * 6 * sampleRate) | 0);
+  }
+  noteOff(note){
+    if(this.wasm){ this.wasm.x.riotcore_note_off(this.wasm.core, note); return; }
+    for(const v of this.voices) if(v.on && v.gate && v.note===note){ v.gate=false; v.stage=4; }
+  }
+  /* u32 xorshift — bit-identical to fx_rand in dsp_core.rs */
+  fxRand(){
+    let x = this.fx.rng>>>0;
+    x ^= (x<<13)>>>0; x ^= x>>>17; x ^= (x<<5)>>>0; x >>>= 0;
+    this.fx.rng = x;
+    return x/4294967296;
+  }
+
+  /* ═══ FX RACK · runs on the summed voice bus, pre-master ═══
+     chain: DIGITAL DISTORTION → ANALOG (phaser·chorus·trem) → HYBRID (dly⇄verb)
+     Sections hard-bypass at mix≈0 so default patches are bit-identical. */
+  processFx(out, n, q){
+    const F = this.fx, dt = 1/sampleRate, srK = sampleRate/48000;
+    const dMix = mapP(62,q[62]);
+    const pMix = mapP(41,q[41]), cMix = mapP(44,q[44]), tDep = mapP(47,q[47]);
+    const yMix = mapP(50,q[50]), vMix = mapP(54,q[54]);
+    const duckAmt = mapP(68,q[68]), duckOn = duckAmt>0.001;
+    const dkA = 1-Math.exp(-1/(0.003*sampleRate)),      /* 3 ms attack   */
+          dkR = 1-Math.exp(-1/(0.14*sampleRate));       /* 140 ms release */
+    /* ◍ filter: LP fully open with env centered = true bypass (bit-identical) */
+    const fCutN = Math.min(1,Math.max(0,q[63]));
+    const fRes = mapP(64,q[64]), fModeT = mapP(65,q[65]),
+          fEnvA = (mapP(66,q[66])-0.5)*2;
+    const fSlope = Math.round(mapP(67,q[67]));
+    const fStages = fSlope===0 ? 1 : fSlope===1 ? 2 : 4;
+    /* resonance governor (MΛVΞRICK spec): stacked resonant stages multiply
+       their peaks — scale res 1.0/0.7/0.45 before computing damping */
+    const fGov = fSlope===0 ? 1 : fSlope===1 ? 0.7 : 0.45;
+    const fltOn = !(fSlope===0 && fModeT<0.002 && fCutN>0.999 && Math.abs(fEnvA)<0.004);
+    const distOn = dMix>0.001, anlgOn = pMix>0.001||cMix>0.001||tDep>0.001,
+          hybOn = yMix>0.001||vMix>0.001;
+    if(!fltOn && !distOn && !anlgOn && !hybOn) return;
+
+    /* denormal flush: subnormal floats in decaying feedback state stall
+       ARM/wasm float units → periodic CPU-spike pops in quiet tails
+       (mirrored in dsp_core.rs) */
+    const FL=v=>(v<1e-15&&v>-1e-15)?0:v;
+    F.dlyLp=FL(F.dlyLp); F.vlp0=FL(F.vlp0); F.vlp1=FL(F.vlp1);
+    F.vlp2=FL(F.vlp2); F.vlp3=FL(F.vlp3);
+    for(let k=0;k<4;k++){ F.fIc1[k]=FL(F.fIc1[k]); F.fIc2[k]=FL(F.fIc2[k]); }
+    F.scrLp=FL(F.scrLp); F.scrBp=FL(F.scrBp); F.toneLp=FL(F.toneLp);
+    F.dcY=FL(F.dcY); F.icY=FL(F.icY);
+    F.fEnv=FL(F.fEnv); F.cmpEnv=FL(F.cmpEnv); F.scrEnv=FL(F.scrEnv); F.phFb=FL(F.phFb);
+    for(let k=0;k<6;k++){ F.apX[k]=FL(F.apX[k]); F.apY[k]=FL(F.apY[k]); }
+
+    /* DRIFT — thermal instability: slow random walk nudging every analog LFO */
+    const drAmt = mapP(49,q[49]);
+    F.drift += ((this.fxRand()*2-1) - F.drift)*0.004;
+    const dr = F.drift*drAmt;
+
+    /* ── filter block consts (TPT SVF — unconditionally stable to Nyquist) ── */
+    let fA1=0, fA2=0, fA3=0, fK=1;
+    const R = this.rmp;
+    if(fltOn){
+      const fEff = Math.min(sampleRate*0.49,
+        Math.max(20, mapP(63,q[63]) * Math.pow(2, fEnvA*F.fEnv*6)));
+      const g = Math.tan(Math.PI*fEff/sampleRate);
+      fK = 2 - 1.96*fRes*fGov;                   /* res→1 approaches self-osc */
+      fA1 = 1/(1+g*(g+fK)); fA2 = g*fA1; fA3 = g*fA2;
+      if(R.a1===0 && R.a2===0){ R.a1=fA1; R.a2=fA2; R.a3=fA3; R.k=fK;
+                                R.fmode=fModeT; }  /* first engage */
+    }
+
+    /* ── distortion block consts ── */
+    const drive = mapP(58,q[58]), mode = Math.round(mapP(59,q[59])),
+          tone = mapP(60,q[60]), bias = mapP(61,q[61]);
+    const G = 1 + drive*drive*59, b0 = (bias-0.5)*0.6;
+    const toneK = 1 - Math.exp(-TAU*(300*Math.pow(2,tone*4))/sampleRate);
+    const icSlew = 0.45/(1+drive*14);                /* op-amp slew ceiling/sample */
+    const crQ = Math.pow(2, 12-drive*10), crN = 1+((drive*23)|0);
+    const scrF = Math.sin(Math.PI*Math.min(0.45, (120*Math.pow(2,tone*4.5))/sampleRate));
+    const scrFb = drive*1.35;
+
+    /* ── analog block consts (drift-modulated) ── */
+    const pRate = mapP(42,q[42])*(1+dr*0.07), pFb = mapP(43,q[43]);
+    const cRate = mapP(45,q[45])*(1+dr*0.05), cDep = mapP(46,q[46])*(1+dr*0.1);
+    const tRate = mapP(48,q[48])*(1+dr*0.04);
+    const choBase = 0.012*sampleRate, choDepS = cDep*0.009*sampleRate;
+
+    /* ── hybrid block consts ── */
+    const dFb = mapP(52,q[52]), dCol = mapP(53,q[53]);
+    const vSize = mapP(55,q[55]), vDec = mapP(56,q[56]), bleed = mapP(57,q[57]);
+    const DM2 = F.dly.length-1;
+    const dTgt = Math.min(F.dly.length-4, mapP(51,q[51])*sampleRate);
+    const dlyPrev = F.dlySmp;
+    F.dlySmp += (dTgt - F.dlySmp)*0.03;              /* tape-style time glide */
+    const colK = 1 - Math.exp(-TAU*(400*Math.pow(2,dCol*4.6))/sampleRate);
+    const vg = 0.72 + vDec*0.26, vDamp = 0.35;
+    const scale = (0.4+vSize*1.1)*srK;
+    F.vl0 += (Math.min(16380,1687*scale)-F.vl0)*0.02;
+    F.vl1 += (Math.min(16380,2039*scale)-F.vl1)*0.02;
+    F.vl2 += (Math.min(16380,2503*scale)-F.vl2)*0.02;
+    F.vl3 += (Math.min(16380,3023*scale)-F.vl3)*0.02;
+    const L1 = Math.min(510,(142*srK)|0), L2 = Math.min(1022,(379*srK)|0);
+    const CM = F.cho.length-1;
+
+    for(let s=0;s<n;s++){
+      let x = out[s];
+
+      /* ═ ◍ FILTER ═ */
+      if(fltOn){
+        const tL=(s+1)/n;                        /* coef lerp: swept cutoff/res
+                                                    glide instead of block-step */
+        const a1=R.a1+(fA1-R.a1)*tL, a2=R.a2+(fA2-R.a2)*tL,
+              a3=R.a3+(fA3-R.a3)*tL, kk=R.k+(fK-R.k)*tL;
+        const ax = x<0?-x:x;                     /* follower feeds next block's cutoff */
+        F.fEnv += (ax-F.fEnv)*(ax>F.fEnv ? 0.03 : 0.0015);
+        /* ═ TOPOLOGY MORPH × CASCADE ═ every TPT tap exists each sample —
+           crossfade LP→BP→HP→NOTCH per stage, feed stages serially for
+           12/24/48 dB/oct. Integrators never see a switch. (twin: dsp_core.rs) */
+        const mS = R.fmode + (fModeT-R.fmode)*tL;
+        const seg = mS<1 ? 0 : mS<2 ? 1 : 2, mt = mS-seg;
+        let y = x;
+        for(let st=0; st<fStages; st++){
+          const v3 = y - F.fIc2[st],
+                v1 = a1*F.fIc1[st] + a2*v3,
+                v2 = F.fIc2[st] + a2*F.fIc1[st] + a3*v3;
+          F.fIc1[st] = 2*v1 - F.fIc1[st]; F.fIc2[st] = 2*v2 - F.fIc2[st];
+          const lo = seg===0 ? v2 : seg===1 ? kk*v1 : y - kk*v1 - v2;
+          const hi = seg===0 ? kk*v1 : seg===1 ? y - kk*v1 - v2 : y - kk*v1;
+          y = lo + (hi-lo)*mt;
+        }
+        x = y;
+      }
+
+      /* ═ DIGITAL DISTORTION ═ */
+      if(distOn){
+        let v = x*G + b0, y;
+        if(mode===0){          /* ▙ CLIP — cubic soft clipper, hard rails */
+          y = v>1 ? 0.6667 : v<-1 ? -0.6667 : v - v*v*v/3; y *= 1.5;
+        } else if(mode===1){   /* ⎍ PUSH A/B — crossover notch + asym rails */
+          const xo = 0.02+bias*0.05, av = v<0?-v:v;
+          if(av<xo) v *= av/xo;
+          y = v>=0 ? Math.tanh(v*(1+(bias-0.5)*0.8))
+                   : Math.tanh(v*(1-(bias-0.5)*0.8));
+        } else if(mode===2){   /* ▣ IC — op-amp slew limit into rail clip */
+          const dv = v - F.icY;
+          F.icY += dv>icSlew ? icSlew : dv<-icSlew ? -icSlew : dv;
+          y = (F.icY>0.9 ? 0.9 : F.icY<-0.9 ? -0.9 : F.icY)/0.9;
+        } else if(mode===3){   /* ◉ COMP — follower-driven gain into tanh */
+          const ax = x<0?-x:x;
+          F.cmpEnv += (ax-F.cmpEnv)*(ax>F.cmpEnv ? 0.012 : 0.0009);
+          y = Math.tanh(v*(1+drive*7)/(1+F.cmpEnv*drive*11)*0.6);
+        } else if(mode===4){   /* ⁘ CRUSH — SR hold + bit quantize */
+          if(--F.crushCnt<=0){ F.crushCnt = crN; F.crushHold = Math.tanh(v); }
+          y = Math.round(F.crushHold*crQ)/crQ;
+        } else {               /* ⚡ SCREAM — biased tanh, resonant feedback howl */
+          const w0 = v + F.scrBp*scrFb*(1+F.scrEnv*0.5);
+          y = Math.tanh(w0);
+          F.scrEnv += ((y<0?-y:y)-F.scrEnv)*0.004;   /* envelope rides the howl */
+          const hp = y - F.scrLp - 0.18*F.scrBp;
+          F.scrBp += scrF*hp;
+          if(F.scrBp>3) F.scrBp=3; else if(F.scrBp<-3) F.scrBp=-3;
+          F.scrLp += scrF*F.scrBp;                   /* Chamberlin semi-implicit fallback sync */
+          y *= 0.92;
+        }
+        /* shared wet path: tone tilt → DC block (bias modes pull DC) */
+        F.toneLp += toneK*(y - F.toneLp);
+        y = F.toneLp*(1.45-tone*0.9) + (y-F.toneLp)*(0.55+tone*0.9);
+        const dcO = y - F.dcX + 0.999*F.dcY;   /* corner ~7.6Hz: sub survives the dist, infrasonics dont */ F.dcX = y; F.dcY = dcO;
+        x = x*(1-dMix) + dcO*dMix;
+      }
+
+      /* ═ ANALOG ═ */
+      if(anlgOn){
+        if(pMix>0.001){                              /* 6-stage phaser */
+          F.phPh += pRate*dt; if(F.phPh>=1) F.phPh -= 1;
+          const sw = 0.5+0.5*Math.sin(TAU*F.phPh);
+          const wc = Math.PI*(220*Math.pow(2,sw*3.4))/sampleRate;
+          const a = (1-wc)/(1+wc);
+          let t = x + F.phFb*pFb;
+          for(let k=0;k<6;k++){
+            const yk = a*(t - F.apY[k]) + F.apX[k];
+            F.apX[k] = t; F.apY[k] = yk; t = yk;
+          }
+          F.phFb = t;
+          x = (x + t*pMix)/(1+pMix*0.35);
+        }
+        if(cMix>0.001){                              /* dual-tap chorus */
+          F.choPh += cRate*dt; if(F.choPh>=1) F.choPh -= 1;
+          F.cho[F.choW] = x;
+          const d1 = choBase + choDepS*(0.5+0.5*Math.sin(TAU*F.choPh));
+          const d2 = choBase*1.31 + choDepS*(0.5+0.5*Math.sin(TAU*F.choPh+2.094));
+          let rp = F.choW-d1, ri = Math.floor(rp), rf = rp-ri; ri &= CM;
+          let r = F.cho[ri]+(F.cho[(ri+1)&CM]-F.cho[ri])*rf;
+          rp = F.choW-d2; ri = Math.floor(rp); rf = rp-ri; ri &= CM;
+          r += F.cho[ri]+(F.cho[(ri+1)&CM]-F.cho[ri])*rf;
+          F.choW = (F.choW+1)&CM;
+          x = x*(1-cMix*0.5) + r*0.5*cMix;
+        }
+        if(tDep>0.001){                              /* sine tremolo */
+          F.tremPh += tRate*dt; if(F.tremPh>=1) F.tremPh -= 1;
+          x *= 1 - tDep*(0.5+0.5*Math.sin(TAU*F.tremPh));
+        }
+        x *= 1 + dr*0.012;                           /* analog gain wobble */
+      }
+
+      /* ═ HYBRID · delay ⇄ reverb ═ */
+      if(hybOn){
+        const rp = F.dlyW - (dlyPrev + (F.dlySmp-dlyPrev)*((s+1)/n));
+        /* read head glides within the block — it used to TELEPORT hundreds
+           of samples at block edges under delay-time modulation */
+        let ri = Math.floor(rp); const rf = rp-ri; ri &= DM2;
+        const dRead = F.dly[ri] + (F.dly[(ri+1)&DM2]-F.dly[ri])*rf;
+        F.dlyLp += colK*(dRead - F.dlyLp);           /* COLOR: damped repeats */
+        F.dly[F.dlyW] = FL(x + F.dlyLp*dFb);   /* write-flush: buffers must never
+                                                   store subnormals — they'd re-infect
+                                                   states and stall reads for seconds */
+        F.dlyW = (F.dlyW+1)&DM2;
+
+        let wet = 0;
+        if(vMix>0.001){
+          /* BLEED: repeats diffuse into the reverb alongside the dry feed */
+          let d = (x + dRead*bleed)*0.55;
+          let r1 = F.ap1[F.ap1i]; const t1 = d+0.5*r1;
+          F.ap1[F.ap1i] = t1; d = r1-0.5*t1;
+          F.ap1i++; if(F.ap1i>=L1) F.ap1i = 0;
+          let r2 = F.ap2[F.ap2i]; const t2 = d+0.5*r2;
+          F.ap2[F.ap2i] = t2; d = r2-0.5*t2;
+          F.ap2i++; if(F.ap2i>=L2) F.ap2i = 0;
+          /* FDN-4, Hadamard scatter, per-line damping */
+          const n0 = Math.max(32,F.vl0|0), n1 = Math.max(32,F.vl1|0),
+                n2 = Math.max(32,F.vl2|0), n3 = Math.max(32,F.vl3|0);
+          if(F.vi0>=n0) F.vi0 = 0; if(F.vi1>=n1) F.vi1 = 0;
+          if(F.vi2>=n2) F.vi2 = 0; if(F.vi3>=n3) F.vi3 = 0;
+          F.vlp0 += vDamp*(F.vb0[F.vi0]-F.vlp0);
+          F.vlp1 += vDamp*(F.vb1[F.vi1]-F.vlp1);
+          F.vlp2 += vDamp*(F.vb2[F.vi2]-F.vlp2);
+          F.vlp3 += vDamp*(F.vb3[F.vi3]-F.vlp3);
+          const m0 = (F.vlp0+F.vlp1+F.vlp2+F.vlp3)*0.5,
+                m1 = (F.vlp0-F.vlp1+F.vlp2-F.vlp3)*0.5,
+                m2 = (F.vlp0+F.vlp1-F.vlp2-F.vlp3)*0.5,
+                m3 = (F.vlp0-F.vlp1-F.vlp2+F.vlp3)*0.5;
+          F.vb0[F.vi0] = FL(d + vg*m0); F.vi0++;
+          F.vb1[F.vi1] = FL(d + vg*m1); F.vi1++;
+          F.vb2[F.vi2] = FL(d + vg*m2); F.vi2++;
+          F.vb3[F.vi3] = FL(d + vg*m3); F.vi3++;
+          wet = (F.vlp0+F.vlp1+F.vlp2+F.vlp3)*0.35;
+        }
+        /* ⤓ DUCK (MΛVΞRICK §III): follower rides the DRY signal entering
+           the hybrid stage; wet returns pull back on every hit and breathe
+           back in the gaps. duck=0 → multiply by exactly 1 (bit-identical). */
+        let dkG = 1;
+        if(duckOn){
+          const ad = x<0?-x:x;
+          F.dkEnv += (ad - F.dkEnv) * (ad > F.dkEnv ? dkA : dkR);
+          const dpt = F.dkEnv*2.5;
+          dkG = 1 - duckAmt*0.9*(dpt>1?1:dpt);
+        }
+        x = x + (dRead*yMix + wet*vMix)*dkG;
+      }
+      out[s] = x;
+    }
+    /* commit ramp anchors — MISSING SINCE THE RAMP ROUND (silent no-op edit):
+       without this the coef lerp restarted from first-engage values every
+       block, sawtoothing swept filters. Found while wiring the morph. */
+    R.a1=fA1; R.a2=fA2; R.a3=fA3; R.k=fK; R.fmode=fModeT;
+  }
+
+  recPush(out){
+    this.rec.push(new Float32Array(out));        /* copy: out is reused per block */
+    this.recN += out.length;
+    if(this.recN >= sampleRate*600){             /* 10-min hard cap → auto-flush */
+      const c=this.rec; this.rec=null;
+      this.port.postMessage(['recdata',c,sampleRate], c.map(a=>a.buffer));
+    }
+  }
+  readTable(fi, ff, ph){
+    const t = this.tbl.data, x = ph*FRAME, xi = x & (FRAME-1),
+          xf = x - Math.floor(x), x2 = (xi+1) & (FRAME-1);
+    const a = t[fi*FRAME+xi] + (t[fi*FRAME+x2]-t[fi*FRAME+xi])*xf;
+    const b = t[(fi+1)*FRAME+xi] + (t[(fi+1)*FRAME+x2]-t[(fi+1)*FRAME+xi])*xf;
+    return a + (b-a)*ff;
+  }
+
+  process(inputs, outputs){
+    const out = outputs[0][0], n = out.length, dt = 1/sampleRate;
+    /* offline bootstrap (see constructor): consume once, first block */
+    if(this.pendingTable){ const pt=this.pendingTable; this.pendingTable=null;
+      this.setTable(pt.data, pt.nf); }
+    if(this.bootRoutes){ this.routes=this.bootRoutes; this.bootRoutes=null;
+      this.pushRoutesWasm(); }
+    if(this.pendingNote){ const pn=this.pendingNote; this.pendingNote=null;
+      this.noteOn(pn[0], pn[1]); if(pn[2]>0){ this.holdCnt=pn[2]; this.holdNote=pn[0]; } }
+
+    /* bounce gate: worklet-side noteOff so offline renders are sample-accurate */
+    if(this.holdCnt>0){ this.holdCnt-=n; if(this.holdCnt<=0) this.noteOff(this.holdNote); }
+
+    /* ▦ sequencer clock — block-quantized (≤2.7ms jitter @48k), swing preserves
+       bar length: even 16ths stretch by +sw, odd ones shrink by −sw */
+    if(this.seqGate>0){ this.seqGate-=n;      /* runs past auto-stop: last note
+                                                  gate closes naturally into the tail */
+      if(this.seqGate<=0 && this.seqNote>=0){ this.noteOff(this.seqNote); this.seqNote=-1; } }
+    if(this.seq && this.seq.on){
+      this.seqNext -= n;
+      while(this.seqNext<=0){
+        /* bounce: stop after exactly stopAfter steps — never bleed into the tail */
+        if(this.seq.stopAfter && this.seqCount>=this.seq.stopAfter){
+          this.seq.on=false; break; }
+        const sl = this.seq.len || 16;                     /* pattern length 1‥16:
+                                                              15/16, 3/4, 7/8 — any phrase */
+        this.seqStep++; if(this.seqStep>=sl) this.seqStep=0;
+        this.seqCount++;
+        const base = sampleRate*15/this.seq.bpm;           /* one 16th note */
+        const sw = this.seq.swing*0.6;
+        const dur = base*((this.seqStep&1)===0 ? 1+sw : 1-sw);
+        this.seqNext += dur;
+        const st = this.seq.steps[this.seqStep];
+        if(st && st.s){
+          if(this.seqNote>=0) this.noteOff(this.seqNote);
+          this.noteOn(st.note, st.s===2 ? 1.0 : 0.6);      /* accent ≈ +4.4 dB over normal */
+          this.seqNote = st.note;
+          this.seqGate = Math.max(64, dur*0.45);
+        }
+        this.port.postMessage(['step', this.seqStep]);     /* UI playhead */
+      }
+    }
+
+    if(this.wasm){                              /* ── Rust path ── */
+      try{
+        if(this.wasm.pView.buffer.byteLength===0) this.wasm.refresh(); // mem grew
+        this.wasm.pView.set(this.p);
+        this.wasm.x.riotcore_process(this.wasm.core);   /* new ABI: internal buf */
+        if(this.wasm.oView.buffer.byteLength===0) this.wasm.refresh();
+        out.set(this.wasm.oView.subarray(0, n));
+        for(let c=1;c<outputs[0].length;c++) outputs[0][c].set(out);
+        if(this.rec) this.recPush(out);
+        return true;
+      }catch(err){ this.wasm = null; this.port.postMessage(['e','JS-REF (wasm fault)']); }
+    }
+
+    /* ── JS reference path — mirrors dsp_core.rs::process ── */
+    const q = this.q;
+    for(let i=0;i<NP;i++) q[i] = this.p[i];
+    // LFO 1
+    const rate = mapP(34,q[34]), depth = mapP(35,q[35]),
+          shape = Math.round(mapP(36,q[36]));
+    this.lfoPh += rate*n*dt; if(this.lfoPh>=1) this.lfoPh -= 1;
+    this.shPh  += rate*n*dt; if(this.shPh>=1){ this.shPh -= 1; this.sh = Math.random()*2-1; }
+    const lfo1 = shape===0 ? Math.sin(TAU*this.lfoPh)
+              : shape===1 ? 1-4*Math.abs(this.lfoPh-0.5)
+              : shape===2 ? 2*this.lfoPh-1 : this.sh;
+    // LFO 2
+    const rate2 = mapP(38,q[38]), depth2 = mapP(39,q[39]),
+          shape2 = Math.round(mapP(40,q[40]));
+    this.lfo2Ph += rate2*n*dt; if(this.lfo2Ph>=1) this.lfo2Ph -= 1;
+    this.sh2Ph  += rate2*n*dt; if(this.sh2Ph>=1){ this.sh2Ph -= 1; this.sh2 = Math.random()*2-1; }
+    const lfo2 = shape2===0 ? Math.sin(TAU*this.lfo2Ph)
+              : shape2===1 ? 1-4*Math.abs(this.lfo2Ph-0.5)
+              : shape2===2 ? 2*this.lfo2Ph-1 : this.sh2;
+    // Apply each route from its chosen source (r.s: 0=LFO1, 1=LFO2)
+    for(const r of this.routes){
+      const src = r.s ? lfo2*depth2 : lfo1*depth;
+      q[r.i] += src*r.d;
+    }
+    /* one-pole param smoothing: fader moves and LFO block-steps land as
+       ~20ms ramps instead of block-edge cliffs — THE broadband click source.
+       Stepped params (shapes/modes) snap. (mirrored in dsp_core.rs) */
+    if(!this.qsInit){ this.qs.set(q); this.qsInit = true; }
+    for(let i=0;i<NP;i++)
+      this.qs[i] = STEPPED[i] ? q[i] : this.qs[i] + (q[i]-this.qs[i])*0.35;
+    q.set(this.qs);
+
+    const subLv=mapP(0,q[0]), morph=mapP(1,q[1]), drive=mapP(2,q[2]);
+    const pDrop=mapP(3,q[3]), pDec=mapP(4,q[4]);
+    const trLv=mapP(5,q[5]), trDec=mapP(6,q[6]);
+    const addLv=mapP(7,q[7]), tilt=mapP(8,q[8]), spread=mapP(9,q[9]);
+    const texLv=mapP(26,q[26]), texM=mapP(27,q[27]),
+          grain=mapP(28,q[28]), det=mapP(29,q[29]);
+    const aA=mapP(30,q[30]), aD=mapP(31,q[31]), aS=mapP(32,q[32]), aR=mapP(33,q[33]);
+    const master=mapP(37,q[37]);
+    const R = this.rmp;
+
+    /* additive weights: user partials × spectral tilt, constant-power norm */
+    const tExp = (tilt-0.5)*4, w = this.w; let wSum = 1e-9; let pMax = 0;
+    for(let p=0;p<16;p++){
+      w[p] = mapP(10+p,q[10+p])*Math.pow(p+1,tExp);
+      wSum += w[p]*w[p];
+      if(w[p] >= 1e-5) pMax = p+1;                 /* highest audible partial (+1 = count) */
+    }
+    const wNorm = 1/Math.sqrt(wSum);
+    /* Load-adaptive partial cap: when the voice pool is stacked, trim the
+       partial count so total sine-calls/sample stays bounded on weak CPUs
+       (Moto G-class). Counts active voices once per block. Below ~4 voices
+       the full 16 partials run; as voices stack, the ceiling tightens. */
+    let activeV = 0;
+    for(const v of this.pool) if(v.on) activeV++;   /* tails render DSP too */
+    const capTgt = activeV <= 3 ? 16
+                 : activeV <= 5 ? 12
+                 : activeV <= 6 ? 9 : 7;
+    /* glide the cap and FADE the boundary partial: hard pTop jumps were
+       gating full-weight partials on voice-count changes → HF clicks that
+       the delay/verb then recirculated. (mirrored in dsp_core.rs) */
+    this.pCap += (capTgt - this.pCap)*0.08;
+    const pCapF = this.pCap;
+    const pTop = Math.min(pMax, Math.ceil(pCapF));
+
+    const cA = 1-Math.exp(-dt/(aA*0.35)), cD = 1-Math.exp(-dt/(aD*0.35)),
+          cR = 1-Math.exp(-dt/(aR*0.35));
+    const g = 1+drive*9, gInv = 1/Math.tanh(g);
+    const nf = Math.max(2, this.tbl.frames), fmT = texM*(nf-1);
+    /* fi/ff now lerped per sample inside the texture block (crackle fix) */
+    if(!R.init){ R.init=true; R.sub=subLv; R.add=addLv; R.tex=texLv;
+                 R.mas=master; R.fm=fmT; }
+    const grainLen = grain>0 ? Math.max(256, ((0.25-grain*0.23)*sampleRate)|0) : 0;
+    const nyq = sampleRate*0.48;
+
+    out.fill(0);
+    for(const v of this.pool){
+      if(!v.on) continue;
+      const f0 = v.f0, vel = v.vel;
+      for(let s=0;s<n;s++){
+        /* envelope */
+        if(v.stage===1){ v.env += (1.02-v.env)*cA;
+          if(v.env>=1){ v.env=1; v.stage=2; } }
+        else if(v.stage===2){ v.env += (aS-v.env)*cD;
+          if(Math.abs(v.env-aS)<1e-4) v.stage=3; }
+        else if(v.stage===3){ v.env += (aS-v.env)*cD; }  /* track live SUSTAIN moves
+                                                            (mirrored in dsp_core.rs) */
+        else if(v.stage===4){ v.env -= v.env*cR;
+          if(v.env<1e-4){ v.on=false; break; } }
+        else if(v.stage===5){ v.env *= 0.85;             /* steal kill: silent in
+                                                            ~57 samples (<1.5ms) */
+          if(v.env<1e-4){ v.on=false; break; } }
+
+        /* ── PILLAR 1 · sub/impact ── */
+        const fDrop = f0*(1+pDrop*6*Math.exp(-v.t/pDec));
+        v.phS += fDrop*dt; if(v.phS>=1) v.phS -= 1;
+        const sn = Math.sin(TAU*v.phS);
+        const tri = 0.6366197724 * Math.asin(sn);        /* 2/π·asin → triangle */
+        let sub = Math.tanh((sn + morph*(tri-sn))*g)*gInv;
+        if(trLv>0 && v.trSamp>0){                        /* HP'd noise click — hard-gated */
+          const n0 = Math.random()*2-1;
+          sub += (n0-v.pn)*0.5*trLv*Math.exp(-v.t/trDec);
+          v.pn = n0;
+          v.trSamp--;                                    /* can only expire, never re-arm */
+        }
+
+        /* ── PILLAR 2 · additive overtone array ── */
+        let add = 0;
+        for(let p=0;p<pTop;p++){
+          const wp = w[p]; if(wp<1e-5) continue;
+          const np = p+1, fn = f0*np*(1+spread*0.0009*np*np);
+          if(fn>=nyq) continue;
+          /* alias FADE, not gate: a partial crossing the guard (spread is
+             modulatable) used to hard-toggle at full amplitude — a click
+             pinned at ~23 kHz. Taper over the top 15%. */
+          const ag = fn > nyq*0.85 ? (nyq-fn)/(nyq*0.15) : 1;
+          const cg = pCapF - p; /* boundary partial fades as the cap glides */
+          const g2 = ag * (cg>=1 ? 1 : cg<0 ? 0 : cg);
+          v.phA[p] += fn*dt; if(v.phA[p]>=1) v.phA[p] -= 1;
+          add += wp*g2*Math.sin(TAU*v.phA[p]);
+        }
+        add *= wNorm;
+
+        /* ── PILLAR 3 · granular / wavetable ── */
+        let tex = 0;
+        if(texLv>0.001){
+          let gG = 1;
+          if(grainLen>0){
+            if(--v.gCnt<=0){
+              v.gCnt = grainLen + (Math.random()*grainLen)|0;
+              v.gFade = 0; v.phT = Math.random();
+            }
+            if(v.gFade<1) v.gFade = Math.min(1, v.gFade + 1/384);
+            /* SYMMETRIC grain fade: the old half-fix ramped the new grain IN
+               but cut the old one instantly — a full-amplitude one-sample
+               discontinuity at EVERY retrigger. With audio-sample tables the
+               cut lands on arbitrary waveform → the 8–50ms HF clicks that
+               delay/verb recirculate into tails. Fade OUT as the jump nears,
+               IN after it. (mirrored in dsp_core.rs) */
+            const gOut = v.gCnt < 384 ? v.gCnt/384 : 1;
+            gG = v.gFade < gOut ? v.gFade : gOut;
+          }
+          v.phT += f0*dt; if(v.phT>=1) v.phT -= 1;
+          v.phT2 += f0*(1+det*0.012)*dt; if(v.phT2>=1) v.phT2 -= 1;
+          const fmS = R.fm + (fmT-R.fm)*((s+1)/n);   /* morph glides, never jumps */
+          const fiS = Math.min(nf-2, fmS|0), ffS = fmS-fiS;
+          const h1 = this.readTable(fiS,ffS,v.phT)*gG;
+          const h2 = this.readTable(fiS,ffS,v.phT2);
+          tex = (h1+h2)*0.5;
+        }
+
+        {
+          const tL=(s+1)/n;
+          out[s] += (sub*(R.sub+(subLv-R.sub)*tL)
+                   + add*(R.add+(addLv-R.add)*tL)
+                   + tex*(R.tex+(texLv-R.tex)*tL))*v.env*vel*0.35;
+        }
+        v.t += dt;
+      }
+    }
+    this.processFx(out, n, q);                     /* ═ FX RACK (see above) ═ */
+    for(let s=0;s<n;s++){
+      const mS = R.mas + (master-R.mas)*((s+1)/n);
+      out[s] = Math.tanh(out[s]*mS*1.4);           /* master soft clip */
+    }
+    R.sub=subLv; R.add=addLv; R.tex=texLv; R.mas=master; R.fm=fmT;
+    for(let c=1;c<outputs[0].length;c++) outputs[0][c].set(out);
+    if(this.rec) this.recPush(out);
+    return true;
+  }
+}
+registerProcessor('riot-core', RiotCore);
+`;
+
+/* ═══════════════════════════ UI THREAD ═══════════════════════════════ */
+let ctx=null, node=null, sab=null, analyser=null, pView=new Float32Array(NP);
+PARAMS.forEach((p,i)=> pView[i]=norm(p,p.d));
+const routes=[]; let assignMode=false; let assignSource=0;
+const $=id=>document.getElementById(id);
+const stat=t=>$("stat").innerHTML=t;
+
+function writeParam(i,v){
+  pView[i]=v;                                   /* SAB path: this IS the bridge */
+  if(node && !sab) node.port.postMessage(['p',i,v]);
+}
+
+/* ── latency mode (persisted) ─────────────────────────────────────────── */
+let latStable=false;
+try{ latStable = localStorage.getItem("riot.latmode")==="stable"; }catch(_){}
+function renderLat(){
+  $("latMode").textContent = latStable ? "▤ STABLE" : "⚡ LOW-LAT";
+  $("latMode").title = latStable
+    ? "big audio buffer: pop-resistant, ~60ms latency — tap to switch"
+    : "smallest audio buffer: tight keys, may pop on phones — tap to switch";
+}
+$("latMode").addEventListener("click",()=>{
+  latStable=!latStable;
+  try{ localStorage.setItem("riot.latmode", latStable?"stable":"low"); }catch(_){}
+  renderLat();
+  stat(latStable ? "▤ STABLE armed — power-cycle to apply"
+                 : "⚡ LOW-LAT armed — power-cycle to apply");
+});
+renderLat();
+
+/* ── SRC·D2 duo chassis: arrows switch the face when embedded ─────────── */
+if(window.parent!==window){
+  document.body.classList.add("embedded");
+  document.querySelectorAll(".faceArrow").forEach(a=>
+    a.addEventListener("click",()=>parent.postMessage({src:"srcd-duo",cmd:"switch"},"*")));
+}
+
+/* ── power / boot ───────────────────────────────────────────────────── */
+let booting=false;
+let wasmBytesG=null;                             /* cached for offline bounces */                               /* re-entry guard: ctx is set
+                                                    before node exists, so a
+                                                    2nd click mid-boot used to
+                                                    hit node.port on null */
+$("pwr").addEventListener("click", async ()=>{
+  if(booting) return;
+  if(ctx){ if(node) node.port.postMessage(['panic']); await ctx.close();
+    ctx=null; node=null; analyser=null; sab=null; $("pwr").classList.remove("on");
+    stat("STANDBY"); return; }
+  booting=true;
+  try{
+  /* STABLE mode: phones often can't sustain the minimum buffer with the
+     full rack live — 'playback' buys underrun headroom for ~60ms latency */
+  ctx=new (window.AudioContext||window.webkitAudioContext)(
+    {latencyHint: latStable ? "playback" : "interactive"});
+
+  let wasmBytes=null;                            /* optional Rust core */
+  try{ const r=await fetch(WASM_URL); if(r.ok) wasmBytes=await r.arrayBuffer(); }catch(e){}
+  wasmBytesG = wasmBytes;                        /* bounces render on the same core */
+
+  /* prefer the external wasm-bindgen worklet host (riot_worklet.js) when
+     the Rust build exists; otherwise inline JS reference core via blob   */
+  let hosted=false;
+  if(wasmBytes){
+    try{ await ctx.audioWorklet.addModule("riot_worklet.js"); hosted=true; }
+    catch(e){ hosted=false; }
+  }
+  if(!hosted){
+    const url=URL.createObjectURL(new Blob([WORKLET_SRC],{type:"application/javascript"}));
+    await ctx.audioWorklet.addModule(url);
+  }
+
+  const opts={init:Array.from(pView)};
+  if(window.crossOriginIsolated){                /* production: COOP/COEP on */
+    sab=new SharedArrayBuffer(NP*4);
+    const shared=new Float32Array(sab); shared.set(pView); pView=shared;
+    opts.sab=sab;
+  }
+  if(wasmBytes) opts.wasmBytes=wasmBytes;
+  node=new AudioWorkletNode(ctx,"riot-core",
+    {outputChannelCount:[2], processorOptions:opts});
+  node.port.onmessage=e=>{ if(e.data[0]==='e'){
+    $("coreKind").textContent=e.data[1];
+    $("bridgeKind").textContent=sab?"SharedArrayBuffer":"port messages";
+    stat("LIVE · "+ctx.sampleRate+" Hz · <b>"+e.data[1]+"</b> · "+(sab?"SAB":"port")
+      +" · "+(latStable?"STABLE":"LOW-LAT")
+      +(ctx.baseLatency?" "+Math.round(ctx.baseLatency*1000)+"ms":"")+" · 8-voice");
+  } else if(e.data[0]==='step'){                 /* ▦ playhead */
+    sqPads.forEach((p,i)=>p.el.classList.toggle("play",i===e.data[1]));
+  } else if(e.data[0]==='recdata'){              /* ⏺ take arrives (stop or 10-min cap) */
+    recOn=false; clearInterval(recTick); $("recT").textContent="";
+    $("recBtn").classList.remove("live"); $("recBtn").textContent="⏺ RECORD";
+    assembleRec(e.data[1], e.data[2]);
+  }};
+  analyser=ctx.createAnalyser(); analyser.fftSize=1024;
+  if(document.body.classList.contains("embedded")){
+    /* SUBSTRΛTΞ tap: inside the console the module surrenders its output
+       to the chassis mixer via MediaStream — standalone stays direct */
+    const tap=ctx.createMediaStreamDestination();
+    node.connect(analyser).connect(tap);
+    window.__srcdModuleOut = tap.stream;
+    parent.postMessage({src:"srcd-duo",cmd:"audio-ready",mod:"riot"},"*");
+  } else {
+    node.connect(analyser).connect(ctx.destination);
+  }
+  pushRoutes(); pushSeq();
+  $("pwr").classList.add("on");
+  }catch(err){                                   /* failed boot: don't strand a half-open ctx */
+    if(ctx){ try{ await ctx.close(); }catch(_){} }
+    ctx=null; node=null; analyser=null; sab=null;
+    $("pwr").classList.remove("on");
+    stat("BOOT FAILED · "+((err&&err.message)||err));
+  }finally{ booting=false; }
+});
+
+/* ── sequence state (moved to resolve TDZ for fader formatting) ─────── */
+const NN12=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const noteName=m=>NN12[m%12]+(Math.floor(m/12)-1);
+const seqState={on:false,bpm:120,swing:0,len:16,
+  steps:[...Array(16)].map((_,i)=>({s:i%4===0?1:0,note:36}))};   /* 4-floor starter */
+
+/* ── fader factory ──────────────────────────────────────────────────── */
+const faderByParam={};
+function fmt(p,v){
+  const real=p.c==="exp"?p.min*Math.pow(p.max/p.min,v):p.min+(p.max-p.min)*v;
+  if(p.c==="step") return (p.labels||["∿ SINE","△ TRI","⋀ RAMP","⁙ S&H"])[Math.round(real)]||Math.round(real);
+  /* ═ MΛVΞRICK §II: tempo-synced readouts ═ (display only, engine untouched) */
+  if(p.k==="dlyTime"){
+    const bpm = (typeof seqState!=="undefined" && seqState) ? seqState.bpm : 120;
+    const beat = 60/bpm;
+    const divs = [[beat/16,"1/64"],[beat/8,"1/32"],[beat/6,"1/16T"],[beat*0.1875,"1/32•"],
+      [beat/4,"1/16"],[beat/3,"1/8T"],[beat*0.375,"1/16•"],[beat/2,"1/8"],
+      [beat*2/3,"1/4T"],[beat*0.75,"1/8•"],[beat,"1/4"],[beat*4/3,"1/2T"],
+      [beat*1.5,"1/4•"],[beat*2,"1/2"],[beat*3,"1/2•"],[beat*4,"1 bar"]];
+    let best=divs[0]; for(const d of divs) if(Math.abs(d[0]-real)<Math.abs(best[0]-real)) best=d;
+    const off=Math.abs(best[0]-real)/best[0];
+    return real.toFixed(3)+"s"+(off<0.03?" ·"+best[1]:" ·≈"+best[1]);
+  }
+  if(p.k==="lfoRate"||p.k==="lfo2Rate"){
+    if(real>=20) return real.toFixed(1)+"Hz ⚠audio";
+    const bpm = (typeof seqState!=="undefined" && seqState) ? seqState.bpm : 120;
+    const beat=60/bpm, per=1/real;
+    const divs=[[beat/4,"1/16"],[beat/2,"1/8"],[beat,"1/4"],[beat*2,"1/2"],
+      [beat*4,"1 bar"],[beat*8,"2 bars"],[beat*16,"4 bars"],[beat*32,"8 bars"]];
+    let best=divs[0]; for(const d of divs) if(Math.abs(d[0]-per)<Math.abs(best[0]-per)) best=d;
+    const off=Math.abs(best[0]-per)/best[0];
+    return real.toFixed(2)+"Hz"+(off<0.05?" ·"+best[1]:" ·≈"+best[1]);
+  }
+  if(p.c==="morph"){
+    const L=p.labels, i0=Math.min(L.length-1,Math.floor(real)), t=real-i0;
+    return t<0.02 ? L[i0] : t>0.98 ? L[Math.min(L.length-1,i0+1)]
+      : L[i0]+" ▸ "+L[i0+1]+" "+Math.round(t*100)+"%";
+  }
+  if(p.max<=1 && p.min===0 && !p.u) return Math.round(real*100)+"%";
+  return (real>=10?real.toFixed(1):real.toFixed(real<0.1?3:2))+(p.u||"");
+}
+function makeFader(i,host,big){
+  const p=PARAMS[i], el=document.createElement("div");
+  el.className="ctl c-"+p.e+(big?" big":"");
+  el.innerHTML='<div class="lab"><span>'+p.n+'</span><span class="val"></span></div>'+
+    '<div class="trk"><div class="fill"></div><div class="tick"></div><span class="mdot">⌁</span></div>';
+  const trk=el.querySelector(".trk"),fill=el.querySelector(".fill"),
+        tick=el.querySelector(".tick"),val=el.querySelector(".val");
+  const render=()=>{ const v=pView[i];
+    fill.style.width=(v*100)+"%"; tick.style.left="calc("+(v*100)+"% - 1px)";
+    val.textContent=fmt(p,v); };
+  const set=v=>{ writeParam(i,Math.min(1,Math.max(0,v))); render(); };
+  trk.addEventListener("pointerdown",e=>{
+    if(assignMode){ addRoute(i); return; }
+    trk.setPointerCapture(e.pointerId);
+    const move=ev=>set((ev.clientX-trk.getBoundingClientRect().left)/trk.clientWidth);
+    move(e); trk.onpointermove=move;
+    const end=()=>{ trk.onpointermove=null; };
+    trk.onpointerup=end; trk.onpointercancel=end;
+  });
+  host.appendChild(el); render();
+  faderByParam[i]={el,render};
+  return el;
+}
+/* macro dashboard: curated performance controls */
+[[0,"mSub",1],[1,"mSub",1],[3,"mSub"],[5,"mSub"],
+ [7,"mAdd"],[8,"mAdd",1],[9,"mAdd"],
+ [26,"mTex"],[27,"mTex",1],[28,"mTex"],
+ [34,"mLfo"],[35,"mLfo"],[36,"mLfo"],
+ [38,"mLfo2"],[39,"mLfo2"],[40,"mLfo2"]].forEach(([i,h,b])=>makeFader(i,$(h),b));
+/* engine room: deep params */
+[[2,"eSub"],[4,"eSub"],[6,"eSub"]].forEach(([i,h])=>makeFader(i,$(h)));
+makeFader(29,$("eTex"));
+[[30,"eEnv"],[31,"eEnv"],[32,"eEnv"],[33,"eEnv"]].forEach(([i,h])=>makeFader(i,$(h)));
+makeFader(37,$("eGlb"),1);
+makeFader(63,$("fFlt"),1); makeFader(64,$("fFlt")); makeFader(65,$("fFlt")); makeFader(66,$("fFlt")); makeFader(67,$("fFlt"));
+/* FX rack */
+[[41,"fPh",1],[42,"fPh"],[43,"fPh"],[49,"fPh"],
+ [44,"fCho",1],[45,"fCho"],[46,"fCho"],[47,"fCho"],[48,"fCho"],
+ [50,"fDly",1],[51,"fDly"],[52,"fDly"],[53,"fDly"],
+ [54,"fVrb",1],[55,"fVrb"],[56,"fVrb"],[57,"fVrb"],[68,"fVrb"],
+ [62,"fDst",1],[58,"fDst",1],[59,"fDst"],[60,"fDst"],[61,"fDst"]]
+ .forEach(([i,h,b])=>makeFader(i,$(h),b));
+
+/* ── partial sculptor ───────────────────────────────────────────────── */
+const pc=$("partials"),pg=pc.getContext("2d");
+function drawPartials(){
+  const dpr=devicePixelRatio||1;
+  const w=pc.width=pc.clientWidth*dpr, h=pc.height=pc.clientHeight*dpr;
+  pg.clearRect(0,0,w,h);
+  const bw=w/16;
+  for(let n=0;n<16;n++){
+    const v=pView[10+n], bh=v*(h-14*dpr);
+    pg.fillStyle="rgba(255,180,84,"+(n%2?0.4:0.95)+")";
+    pg.fillRect(n*bw+2,h-bh-2,bw-4,bh);
+    if(v>0.03){ pg.fillStyle="#ffd9a3"; pg.font=(9*dpr)+"px 'IBM Plex Mono'";
+      pg.textAlign="center"; pg.fillText(n%2?"✦":"❃", n*bw+bw/2, h-bh-5); }
+  }
+}
+function sculpt(e){
+  const r=pc.getBoundingClientRect();
+  const n=Math.min(15,Math.max(0,((e.clientX-r.left)/r.width*16)|0));
+  const v=Math.min(1,Math.max(0,1-(e.clientY-r.top)/r.height));
+  writeParam(10+n,v); drawPartials();
+}
+let pcLastTap=0;                                 /* dblclick doesn't fire reliably
+                                                    on touch — detect it ourselves */
+pc.addEventListener("pointerdown",e=>{
+  const now=performance.now();
+  if(now-pcLastTap<300){                         /* double-tap → saw ramp */
+    pcLastTap=0;
+    for(let n=0;n<16;n++) writeParam(10+n,1/(n+1));
+    drawPartials(); return;
+  }
+  pcLastTap=now;
+  pc.setPointerCapture(e.pointerId); sculpt(e); pc.onpointermove=sculpt;
+});
+pc.addEventListener("pointerup",()=>pc.onpointermove=null);
+pc.addEventListener("pointercancel",()=>pc.onpointermove=null);
+new ResizeObserver(drawPartials).observe(pc);
+document.querySelectorAll("[data-hp]").forEach(b=>b.onclick=()=>{
+  const t=b.dataset.hp;
+  for(let i=0;i<16;i++){ const n=i+1;
+    writeParam(10+i,
+      t==="odd" ? (n%2?1/n:0)
+    : t==="even"? (n===1?1:(n%2===0?Math.min(1,1.2/n):0))
+    : t==="saw" ? 1/n
+    : (n===1?1:0));
+  }
+  drawPartials();
+});
+
+/* ── one-touch LFO routing (two sources) ────────────────────────────── */
+function armAssign(src){
+  assignSource = src;
+  assignMode = true;
+  document.body.classList.toggle("assign",true);
+  $("moveDial").classList.toggle("armed", src===0);
+  $("moveDial2").classList.toggle("armed", src===1);
+  $("assignHint").innerHTML = "◂ tap a fader to link <b>LFO "+(src+1)+"</b> to it";
+}
+function disarmAssign(){
+  assignMode=false; document.body.classList.remove("assign");
+  $("moveDial").classList.remove("armed"); $("moveDial2").classList.remove("armed");
+}
+$("moveDial").addEventListener("click",()=>{
+  (assignMode && assignSource===0) ? disarmAssign() : armAssign(0);
+});
+$("moveDial2").addEventListener("click",()=>{
+  (assignMode && assignSource===1) ? disarmAssign() : armAssign(1);
+});
+function addRoute(i){
+  const src=assignSource;
+  disarmAssign();
+  if(routes.some(r=>r.i===i)){                   /* was announcing "linked"
+                                                    even when nothing happened */
+    $("assignHint").innerHTML="⌁ "+PARAMS[i].n+" already linked — tap its L1/L2 button to switch source";
+    return;
+  }
+  routes.push({i,d:0.5,s:src});
+  $("assignHint").innerHTML="⌁ linked: "+PARAMS[i].n+" → LFO "+(src+1);
+  renderRoutes(); pushRoutes();
+}
+function pushRoutes(){
+  if(node) node.port.postMessage(['r',routes.map(r=>({i:r.i,d:r.d,s:r.s||0}))]);
+  markRouted();
+}
+function markRouted(){
+  Object.entries(faderByParam).forEach(([i,f])=>
+    f.el.classList.toggle("routed",routes.some(r=>r.i==i)));
+}
+function renderRoutes(){
+  const host=$("routes"); host.innerHTML="";
+  routes.forEach((r,k)=>{
+    const row=document.createElement("div"); row.className="route";
+    row.innerHTML='<button class="rsrc" title="modulation source">'+(r.s?"L2":"L1")+'</button>'+
+      '<span class="rn">'+(r.s?"⌁₂ ":"⌁₁ ")+PARAMS[r.i].n+'</span>'+
+      '<input type="range" min="-100" max="100" value="'+(r.d*100)+'">'+
+      '<button class="rx" title="unlink">✕</button>';
+    row.querySelector("input").oninput=e=>{r.d=e.target.value/100;pushRoutes();};
+    row.querySelector(".rx").onclick=()=>{routes.splice(k,1);renderRoutes();pushRoutes();};
+    row.querySelector(".rsrc").onclick=()=>{ r.s = r.s ? 0 : 1; renderRoutes(); pushRoutes(); };
+    host.appendChild(row);
+  });
+  markRouted();
+}
+
+/* ── sample → wavetable drop ────────────────────────────────────────── */
+const drop=$("drop");
+["dragover","dragenter"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
+const picker=document.createElement("input");
+picker.type="file"; picker.accept="audio/*"; picker.style.display="none";
+document.body.appendChild(picker);
+drop.addEventListener("click",()=>picker.click());
+picker.addEventListener("change",()=>picker.files[0]&&loadSample(picker.files[0]));
+drop.addEventListener("drop",e=>e.dataTransfer.files[0]&&loadSample(e.dataTransfer.files[0]));
+async function loadSample(f){
+  if(!ctx || !node){ drop.textContent="⌬ power on first, then drop again"; return; }
+  let abuf;
+  try{ abuf=await ctx.decodeAudioData(await f.arrayBuffer()); }
+  catch(err){ drop.textContent="✕ couldn't decode: "+f.name; return; }
+  let ch=abuf.getChannelData(0); const FR=2048;
+  if(ch.length<FR){                              /* zero-pad short samples:
+       ch.length-FR going negative used to produce negative offsets →
+       undefined reads → NaN table → permanent silence until power-cycle */
+    const pad=new Float32Array(FR); pad.set(ch); ch=pad;
+  }
+  const nf=Math.min(64,Math.max(2,(ch.length/FR)|0));
+  const t=new Float32Array(nf*FR);
+  for(let fr=0;fr<nf;fr++){
+    const off=Math.max(0,((ch.length-FR)*fr/(nf-1))|0);
+    let peak=1e-6;
+    for(let i=0;i<FR;i++){
+      const a=Math.abs(ch[off+i]);
+      if(a>peak && isFinite(a)) peak=a;          /* NaN/Inf in source can't poison peak */
+    }
+    for(let i=0;i<FR;i++){
+      const s=ch[off+i];
+      t[fr*FR+i]=isFinite(s)?s/peak:0;           /* …or the table itself */
+    }
+  }
+  lastTable={data:t.slice(0), nf};             /* copy BEFORE transfer detaches t —
+                                                  bounces need the table too */
+  node.port.postMessage(['t',t,nf],[t.buffer]);
+  drop.textContent="❃ loaded: "+f.name+" → "+nf+" frames · TABLE MORPH scans them";
+}
+
+/* ── scope + dial spin (AnalyserNode: zero port traffic) ────────────── */
+const sc=$("scope"),sg=sc.getContext("2d"),ntick=document.querySelector(".ntick"),ntick2=document.querySelector(".ntick2");
+const buf=new Uint8Array(1024);                  /* analyser time-domain snapshot */
+let dialPh=0,dialPh2=0,lastT=performance.now();
+let scopeLast=0;
+function loop(now){
+  const dt=(now-lastT)/1000; lastT=now;
+  const drawScope = now-scopeLast>=33;           /* ~30fps: phones run cooler,
+                                                    less thermal throttling */
+  if(drawScope) scopeLast=now;
+  const rate=PARAMS[34].min*Math.pow(PARAMS[34].max/PARAMS[34].min,pView[34]);
+  dialPh=(dialPh+dt*rate)%1;
+  ntick.style.transform="translateX(-50%) rotate("+(dialPh*360)+"deg)";
+  const rate2=PARAMS[38].min*Math.pow(PARAMS[38].max/PARAMS[38].min,pView[38]);
+  dialPh2=(dialPh2+dt*rate2)%1;
+  if(ntick2) ntick2.style.transform="translateX(-50%) rotate("+(dialPh2*360)+"deg)";
+  if(drawScope){
+  const dpr=devicePixelRatio||1;
+  const w=sc.clientWidth*dpr, h=sc.clientHeight*dpr;
+  if(sc.width!==w||sc.height!==h){ sc.width=w; sc.height=h; }  /* realloc only on resize */
+  sg.fillStyle="#05070a"; sg.fillRect(0,0,w,h);
+  sg.strokeStyle="#12202c"; sg.beginPath(); sg.moveTo(0,h/2); sg.lineTo(w,h/2); sg.stroke();
+  if(analyser){
+    analyser.getByteTimeDomainData(buf);
+    sg.strokeStyle="#4de3ff"; sg.lineWidth=1.4*dpr;
+    sg.shadowColor="#4de3ff"; sg.shadowBlur=6;
+    sg.beginPath();
+    for(let i=0;i<buf.length;i++){
+      const x=i/buf.length*w, y=buf[i]/255*h;
+      i?sg.lineTo(x,y):sg.moveTo(x,y);
+    }
+    sg.stroke(); sg.shadowBlur=0;
+  }
+  }                                              /* end drawScope gate */
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ── keyboard: on-screen + QWERTY (Bluetooth-friendly) ──────────────── */
+let octave=3;
+const setOct=o=>{octave=Math.min(7,Math.max(0,o));$("octV").textContent=octave;};
+$("octDn").onclick=()=>setOct(octave-1);
+$("octUp").onclick=()=>setOct(octave+1);
+function noteOn(m){ if(node) node.port.postMessage(['n',m,0.9]); }
+function noteOff(m){ if(node) node.port.postMessage(['f',m]); }
+
+const kbd=$("kbd"),WHITE=[0,2,4,5,7,9,11,12,14,16],BLACK={0:1,1:3,3:6,4:8,5:10,7:13,8:15};
+function makeKey(st,blk,leftPct){
+  const k=document.createElement("div");
+  k.className="key"+(blk?" blk":"");
+  if(blk) k.style.left="calc("+leftPct+"% - 3.5%)";
+  const down=e=>{ e.preventDefault(); k.classList.add("dn");
+    k._m=(octave+1)*12+st; noteOn(k._m); };            /* cache midi at press */
+  const up=()=>{ k.classList.remove("dn");
+    if(k._m!=null){ noteOff(k._m); k._m=null; } };
+  k.addEventListener("pointerdown",down);
+  k.addEventListener("pointerup",up);
+  k.addEventListener("pointerleave",up);
+  k.addEventListener("pointercancel",up);
+  kbd.appendChild(k);
+}
+WHITE.forEach(st=>makeKey(st,false));
+Object.entries(BLACK).forEach(([wi,st])=>makeKey(st,true,(+wi+1)*10));
+
+const KEYMAP={a:0,w:1,s:2,e:3,d:4,f:5,t:6,g:7,y:8,h:9,u:10,j:11,k:12,o:13,l:14,p:15};
+const heldQwerty={};                                    /* key → cached midi */
+window.addEventListener("keydown",e=>{
+  if(e.repeat) return;
+  const c=e.key.toLowerCase();
+  if(c==="z"){ setOct(octave-1); return; }
+  if(c==="x"){ setOct(octave+1); return; }
+  if(c in KEYMAP && !(c in heldQwerty)){
+    const m=(octave+1)*12+KEYMAP[c];
+    heldQwerty[c]=m; noteOn(m);                         /* stuck-note fix */
+  }
+});
+window.addEventListener("keyup",e=>{
+  const c=e.key.toLowerCase();
+  if(c in heldQwerty){ noteOff(heldQwerty[c]); delete heldQwerty[c]; }
+});
+window.addEventListener("blur",()=>{
+  Object.values(heldQwerty).forEach(noteOff);
+  for(const k in heldQwerty) delete heldQwerty[k];
+});
+
+/* ── tabs ───────────────────────────────────────────────────────────── */
+let lastTable=null;                              /* last dropped wavetable (UI copy) */
+
+/* ═══════════════════ PATCH BAY · persistence ═══════════════════ */
+function capturePatch(name){
+  const p={fmt:"riot-patch",v:1,name:name||"untitled",ts:Date.now(),
+           params:{},routes:routes.map(r=>({k:PARAMS[r.i].k,d:r.d,s:r.s||0}))};
+  PARAMS.forEach((pp,i)=> p.params[pp.k]=+pView[i].toFixed(5));
+  p.seq={bpm:seqState.bpm,swing:+seqState.swing.toFixed(3),len:seqState.len,
+         steps:seqState.steps.map(st=>({s:st.s,note:st.note}))};
+  return p;
+}
+function refreshFaders(){ for(const k in faderByParam) faderByParam[k].render(); }
+function applyPatch(p){
+  if(!p || p.fmt!=="riot-patch" || !p.params) throw new Error("not a riot patch");
+  PARAMS.forEach((pp,i)=>{
+    /* keys absent from older patches reset to default — a patch is a
+       TOTAL snapshot, never "whatever the filter happened to be doing" */
+    const v = (pp.k in p.params) ? +p.params[pp.k] : norm(pp, pp.d);
+    writeParam(i, Math.min(1,Math.max(0, v || 0)));
+  });
+  routes.length=0;
+  (p.routes||[]).forEach(r=>{
+    const i=PARAMS.findIndex(x=>x.k===r.k);
+    if(i>=0 && !routes.some(q=>q.i===i))
+      routes.push({i, d:Math.min(1,Math.max(-1,+r.d||0)), s:r.s?1:0});
+  });
+  if(p.seq && Array.isArray(p.seq.steps)){
+    seqState.bpm=Math.min(220,Math.max(40,+p.seq.bpm||120));
+    seqState.swing=Math.min(0.75,Math.max(0,+p.seq.swing||0));
+    seqState.len=Math.min(16,Math.max(1,Math.round(+p.seq.len)||16));
+    for(let i=0;i<16;i++){ const st=p.seq.steps[i]||{};
+      seqState.steps[i].s=[0,1,2].includes(st.s)?st.s:0;
+      seqState.steps[i].note=Math.min(84,Math.max(24,+st.note||36)); }
+    seqState.on=false;                           /* never auto-start on load */
+    renderSeqUI(); pushSeq();
+  }
+  renderRoutes(); pushRoutes(); refreshFaders(); drawPartials();
+  $("pName").value = p.name||"";
+}
+/* bank — localStorage, guarded (private modes throw) */
+const PATCH_LS="riot.patches.v1";
+function bankRead(){ try{ return JSON.parse(localStorage.getItem(PATCH_LS)||"{}"); }catch(_){ return {}; } }
+function bankWrite(b){ try{ localStorage.setItem(PATCH_LS, JSON.stringify(b)); return true; }
+                       catch(_){ return false; } }
+function bankList(sel){
+  const b=bankRead(), names=Object.keys(b).sort(), L=$("pList");
+  L.innerHTML = names.length ? "" : "<option value=''>— no saved patches —</option>";
+  names.forEach(n=>{ const o=document.createElement("option");
+    o.value=o.textContent=n; L.appendChild(o); });
+  if(sel) L.value=sel;
+}
+const pMsg=t=>{ $("pMsg").textContent=t; };
+$("pSave").addEventListener("click",()=>{
+  const name=($("pName").value.trim()||"patch "+new Date().toISOString().slice(0,16).replace("T"," "));
+  const b=bankRead(); b[name]=capturePatch(name);
+  pMsg(bankWrite(b) ? "⛃ saved: "+name
+                    : "✕ storage unavailable — use EXPORT .JSON instead");
+  bankList(name);
+});
+$("pLoad").addEventListener("click",()=>{
+  const b=bankRead(), p=b[$("pList").value];
+  if(!p){ pMsg("✕ nothing selected"); return; }
+  try{ applyPatch(p); pMsg("⌁ loaded: "+p.name); }catch(e){ pMsg("✕ "+e.message); }
+});
+$("pDel").addEventListener("click",()=>{
+  const b=bankRead(), n=$("pList").value;
+  if(!(n in b)){ pMsg("✕ nothing selected"); return; }
+  delete b[n]; bankWrite(b); bankList(); pMsg("✕ deleted: "+n);
+});
+$("pExport").addEventListener("click",()=>{
+  const p=capturePatch($("pName").value.trim());
+  const blob=new Blob([JSON.stringify(p,null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=(p.name.replace(/[^\w\- ]+/g,"")||"riot")+".riot.json";
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  pMsg("⇓ exported: "+a.download);
+});
+$("pImport").addEventListener("click",()=>$("pFile").click());
+$("pFile").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ applyPatch(JSON.parse(await f.text())); pMsg("⇑ imported: "+f.name); }
+  catch(err){ pMsg("✕ couldn't import: "+(err.message||"bad file")); }
+  e.target.value="";
+});
+$("pLink").addEventListener("click",async ()=>{
+  const p=capturePatch($("pName").value.trim());
+  const enc=btoa(unescape(encodeURIComponent(JSON.stringify(p))));
+  const url=location.origin+location.pathname+"#p="+enc;
+  try{ await navigator.clipboard.writeText(url); pMsg("⧉ link copied ("+(url.length/1024).toFixed(1)+"KB) — patch travels in the URL"); }
+  catch(_){ prompt("copy the patch link:", url); }
+});
+
+/* ═══════════════════ ⏺ CAPTURE · 32-bit float WAV ═══════════════════ */
+function wavFloat32(data, rate){
+  const len=data.length, size=58+len*4, buf=new ArrayBuffer(size), v=new DataView(buf);
+  const W=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  W(0,"RIFF"); v.setUint32(4,size-8,true); W(8,"WAVE");
+  W(12,"fmt "); v.setUint32(16,18,true);
+  v.setUint16(20,3,true);            /* fmt 3 = IEEE float */
+  v.setUint16(22,1,true);            /* mono */
+  v.setUint32(24,rate,true); v.setUint32(28,rate*4,true);
+  v.setUint16(32,4,true); v.setUint16(34,32,true); v.setUint16(36,0,true); /* cbSize */
+  W(38,"fact"); v.setUint32(42,4,true); v.setUint32(46,len,true);
+  W(50,"data"); v.setUint32(54,len*4,true);
+  /* 58 % 4 ≠ 0 → can't view directly; copy via DataView-safe route */
+  new Uint8Array(buf,58).set(new Uint8Array(data.buffer,data.byteOffset,len*4));
+  return new Blob([buf],{type:"audio/wav"});
+}
+function downloadWav(data, rate, name){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(wavFloat32(data,rate));
+  a.download=name+".wav"; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+const capMsg=t=>{ $("capMsg").textContent=t; };
+/* live record */
+let recOn=false, recT0=0, recTick=null;
+function assembleRec(chunks, rate){
+  let total=0; for(const c of chunks) total+=c.length;
+  const all=new Float32Array(total); let o=0;
+  for(const c of chunks){ all.set(c,o); o+=c.length; }
+  const name="riot-take-"+new Date().toISOString().slice(11,19).replace(/:/g,"");
+  downloadWav(all, rate, name);
+  capMsg("⇓ "+name+".wav · "+(total/rate).toFixed(1)+"s · 32-bit float @ "+rate+"Hz");
+}
+$("recBtn").addEventListener("click",()=>{
+  if(!ctx || !node){ capMsg("⌬ power on first"); return; }
+  recOn=!recOn;
+  node.port.postMessage(['rec', recOn?1:0]);
+  $("recBtn").classList.toggle("live",recOn);
+  $("recBtn").textContent = recOn ? "⏹ STOP" : "⏺ RECORD";
+  if(recOn){ recT0=performance.now(); capMsg("⏺ recording — play something");
+    recTick=setInterval(()=>{ $("recT").textContent=((performance.now()-recT0)/1000).toFixed(1)+"s"; },100);
+  } else { clearInterval(recTick); $("recT").textContent=""; }
+});
+/* bounce: offline render of a one-shot through the same engine */
+(function(){
+  const NN=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"], sel=$("bNote");
+  for(let m=24;m<=84;m++){ const o=document.createElement("option");
+    o.value=m; o.textContent=NN[m%12]+(Math.floor(m/12)-1);
+    if(m===36) o.selected=true; sel.appendChild(o); }
+})();
+$("bGo").addEventListener("click", async ()=>{
+  const rate=+$("bRate").value, hold=+$("bHold").value,
+        tail=+$("bTail").value, note=+$("bNote").value;
+  capMsg("⌛ rendering oneshot offline…");
+  try{
+    const oc=new OfflineAudioContext(1, Math.ceil((hold+tail)*rate), rate);
+    const url=URL.createObjectURL(new Blob([WORKLET_SRC],{type:"application/javascript"}));
+    await oc.audioWorklet.addModule(url); URL.revokeObjectURL(url);
+    const bn=new AudioWorkletNode(oc,"riot-core",
+      {outputChannelCount:[1], processorOptions:{
+        init:Array.from(pView),
+        routes:routes.map(r=>({i:r.i,d:r.d,s:r.s||0})),
+        table:lastTable||undefined,                    /* dropped wavetable prints */
+        wasmBytes:wasmBytesG||undefined,               /* SAME core as live playback */
+        autoNote:[note,0.9,Math.ceil(hold*rate)]}});   /* no port race offline */
+    let engKind="JS-REF";
+    bn.port.onmessage=e=>{ if(e.data[0]==='e') engKind=e.data[1]; };
+    bn.connect(oc.destination);
+    const buf=await oc.startRendering();
+    const nm=($("pName").value.trim().replace(/[^\w\-]+/g,"_")||"riot")
+             +"-"+$("bNote").selectedOptions[0].textContent
+             +"-"+new Date().toISOString().slice(11,19).replace(/:/g,"");
+             /* timestamp: identical names made Android players re-open the
+                FIRST export while new ones saved as "(1)" — you never heard
+                your new settings */
+    downloadWav(buf.getChannelData(0), rate, nm);
+    capMsg("⇓ "+nm+".wav · "+(hold+tail)+"s · 32f @ "+rate+"Hz · "+engKind+" core");
+  }catch(err){ capMsg("✕ bounce failed: "+(err.message||err)); }
+});
+
+/* ═══════════════════ ▦ STEP SEQUENCER · UI ═══════════════════ */
+function pushSeq(){
+  if(node) node.port.postMessage(['seq',JSON.parse(JSON.stringify(seqState))]);
+}
+/* mini-fader: same look as engine faders, but local state (not an engine param) */
+function miniFader(host,label,min,max,val,fmtF,cb){
+  host.innerHTML='<div class="lab"><span>'+label+'</span><span class="val"></span></div>'+
+    '<div class="trk"><div class="fill"></div><div class="tick"></div></div>';
+  const trk=host.querySelector(".trk"),fill=host.querySelector(".fill"),
+        tick=host.querySelector(".tick"),vEl=host.querySelector(".val");
+  let v=val;
+  const render=()=>{ const x=(v-min)/(max-min);
+    fill.style.width=(x*100)+"%"; tick.style.left="calc("+(x*100)+"% - 1px)";
+    vEl.textContent=fmtF(v); };
+  trk.addEventListener("pointerdown",e=>{
+    trk.setPointerCapture(e.pointerId);
+    const mv=ev=>{ const x=Math.min(1,Math.max(0,
+        (ev.clientX-trk.getBoundingClientRect().left)/trk.clientWidth));
+      v=min+(max-min)*x; render(); cb(v); };
+    mv(e); trk.onpointermove=mv;
+    trk.onpointerup=trk.onpointercancel=()=>{ trk.onpointermove=null; };
+  });
+  render();
+  return {set(x){ v=x; render(); }};
+}
+const sqBpmF=miniFader($("sqBpm"),"TEMPO",40,220,seqState.bpm,
+  v=>Math.round(v)+" BPM",v=>{ seqState.bpm=Math.round(v); pushSeq(); });
+const sqSwF=miniFader($("sqSw"),"SWING",0,0.75,seqState.swing,
+  v=>Math.round(v*100)+"%",v=>{ seqState.swing=v; pushSeq(); });
+const sqLenF=miniFader($("sqLen"),"STEPS",1,16,seqState.len,
+  v=>Math.round(v)+" / 16",v=>{ seqState.len=Math.round(v);
+    sqPads.forEach(p=>p.render()); pushSeq(); });
+/* pad grid: tap cycles off→on→accent · vertical drag pitches */
+const sqPads=[];
+(function(){
+  const g=$("sqGrid");
+  for(let i=0;i<16;i++){
+    const p=document.createElement("div");
+    p.className="sqPad";
+    p.innerHTML="<span></span><b></b>";
+    const render=()=>{
+      p.classList.toggle("ghost",i>=seqState.len);   /* beyond length: kept, not played */
+      p.classList.toggle("on",seqState.steps[i].s===1);
+      p.classList.toggle("acc",seqState.steps[i].s===2);
+      p.firstChild.textContent=i+1;
+      p.lastChild.textContent=noteName(seqState.steps[i].note);
+    };
+    p.addEventListener("pointerdown",e=>{
+      p.setPointerCapture(e.pointerId);
+      const y0=e.clientY, n0=seqState.steps[i].note; let dragged=false;
+      p.onpointermove=ev=>{
+        const dy=y0-ev.clientY;
+        if(!dragged && Math.abs(dy)<7) return;
+        dragged=true;
+        seqState.steps[i].note=Math.min(84,Math.max(24,n0+Math.round(dy/8)));
+        render();
+      };
+      p.onpointerup=p.onpointercancel=()=>{
+        p.onpointermove=null;
+        if(!dragged) seqState.steps[i].s=(seqState.steps[i].s+1)%3;  /* the cycle */
+        render(); pushSeq();
+      };
+    });
+    g.appendChild(p); sqPads.push({el:p,render}); render();
+  }
+})();
+function renderSeqUI(){
+  sqPads.forEach(p=>p.render());
+  sqBpmF.set(seqState.bpm); sqSwF.set(seqState.swing); sqLenF.set(seqState.len);
+  $("sqPlay").classList.toggle("live",seqState.on);
+  $("sqPlay").textContent=seqState.on?"■ STOP":"▶ PLAY";
+}
+$("sqPlay").addEventListener("click",()=>{
+  if(!ctx||!node){ pMsg("⌬ power on first — the sequencer runs on the audio clock"); return; }
+  seqState.on=!seqState.on;
+  renderSeqUI(); pushSeq();
+  if(!seqState.on) sqPads.forEach(p=>p.el.classList.remove("play"));
+});
+/* ⇓ BOUNCE LOOP — offline render of the pattern through the same engine */
+$("lGo").addEventListener("click",async ()=>{
+  const rate=48000, bars=+$("lBars").value;
+  const tail=$("lTail").value==="cut" ? 0 : +$("lTail").value;
+  const L=seqState.len, sw=seqState.swing*0.6, base=15/seqState.bpm;
+  /* exact bar duration: step-index parity sets long/short, so odd lengths
+     carry one extra long step per cycle (bar = base*(L+sw) when L is odd) */
+  const nLong=Math.ceil(L/2), nShort=Math.floor(L/2);
+  const oneBar=base*(nLong*(1+sw)+nShort*(1-sw));
+  const loopSecs=bars*oneBar;
+  /* PRE-ROLL: one full uncaptured bar first, so delay/verb fields, LFO
+     phases and env followers are WARM when capture starts — cold-start
+     bounces sounded dry/unprocessed vs live, and the loop seam is now
+     state-continuous (bar N+1 starts exactly like bar 1 did). */
+  const secs=oneBar+loopSecs+tail;
+  capMsg("⌛ rendering "+bars+" bar"+(bars>1?"s":"")+(tail?" +"+tail+"s tail":" · hard cut")+" offline…");
+  try{
+    const oc=new OfflineAudioContext(1,Math.ceil(secs*rate),rate);
+    const url=URL.createObjectURL(new Blob([WORKLET_SRC],{type:"application/javascript"}));
+    await oc.audioWorklet.addModule(url); URL.revokeObjectURL(url);
+    const st=JSON.parse(JSON.stringify(seqState)); st.on=true;
+    st.stopAfter=(bars+1)*seqState.len;                   /* +1 = the pre-roll bar */
+    const bn=new AudioWorkletNode(oc,"riot-core",
+      {outputChannelCount:[1],processorOptions:{
+        init:Array.from(pView),
+        routes:routes.map(r=>({i:r.i,d:r.d,s:r.s||0})),
+        table:lastTable||undefined,                    /* dropped wavetable prints */
+        wasmBytes:wasmBytesG||undefined,               /* SAME core as live playback */
+        seq:st}});                                     /* no port race offline */
+    let engKind="JS-REF";
+    bn.port.onmessage=e=>{ if(e.data[0]==='e') engKind=e.data[1]; };
+    bn.connect(oc.destination);
+    const buf=await oc.startRendering();
+    /* drop the warm-up bar: capture starts at bar 2, state-continuous */
+    const full=buf.getChannelData(0);
+    const cut=full.subarray(Math.round(oneBar*rate));
+    const nm=($("pName").value.trim().replace(/[^\w\-]+/g,"_")||"riot")
+             +"-loop-"+seqState.bpm+"bpm-"+bars+"bar"
+             +"-"+new Date().toISOString().slice(11,19).replace(/:/g,"");
+    downloadWav(cut,rate,nm);
+    capMsg("⇓ "+nm+".wav · "+(loopSecs+tail).toFixed(1)+"s · 32f @ "+rate+"Hz · "
+      +engKind+" core · warm pre-roll");
+  }catch(err){ capMsg("✕ loop bounce failed: "+(err.message||err)); }
+});
+
+/* auto-load a patch travelling in the URL hash — AFTER seq state exists */
+(function(){
+  const m=location.hash.match(/#p=(.+)/);
+  if(!m) { bankList(); return; }
+  try{ applyPatch(JSON.parse(decodeURIComponent(escape(atob(m[1])))));
+       pMsg("⌁ loaded patch from link"); }
+  catch(_){ pMsg("✕ link patch was corrupted"); }
+  bankList();
+})();
+
+const tabs=[["tabM","pgM"],["tabE","pgE"],["tabF","pgF"]];
+tabs.forEach(([t,p])=>$(t).addEventListener("click",()=>{
+  tabs.forEach(([t2,p2])=>{$(t2).classList.toggle("act",t2===t);
+    $(p2).classList.toggle("act",p2===p);});
+  drawPartials();
+}));
+drawPartials();
+</script>
+</body>
+</html>
