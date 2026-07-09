@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>⫷ BΛTTΞRY_CULT ⫸</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0708; --panel: #120d0e; --edge: #2a1a1c; --txt: #e8dcd8; --dim: #7a6a66;
+  --cult: #ff4d3d; --acc2: #ffb03d; --ok: #7dff9e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg); color: var(--txt); font-family: 'Chakra Petch', monospace;
+  font-size: 13px; user-select: none; -webkit-user-select: none; padding-bottom: 40px;
+}
+/* ── header ── */
+header {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+  border-bottom: 1px solid var(--edge); background: var(--panel);
+}
+header h1 { font-size: 14px; letter-spacing: .12em; color: var(--txt); white-space: nowrap; }
+header h1 b { color: var(--acc2); }
+.faceArrow { cursor: default; }
+body.embedded .faceArrow { cursor: pointer; color: var(--cult); text-shadow: 0 0 10px rgba(255, 77, 61, .5); }
+body.embedded .faceArrow:active { opacity: .5; }
+#subPlate {
+  flex: 1; height: 38px; min-width: 60px; background: #0a0708; border: 1px solid var(--edge);
+  display: flex; align-items: center; padding: 0 12px; font-size: 9px; color: var(--dim);
+  letter-spacing: .14em; overflow: hidden; white-space: nowrap;
+}
+#pwr {
+  font-family: inherit; letter-spacing: .12em; background: transparent; color: var(--dim);
+  border: 1px solid var(--dim); padding: 8px 14px; font-size: 12px; cursor: pointer; flex-shrink: 0;
+}
+#pwr.on { color: #140503; background: var(--cult); border-color: var(--cult); box-shadow: 0 0 16px rgba(255, 77, 61, .45); }
+#stat { padding: 6px 14px; font-size: 10px; color: var(--dim); letter-spacing: .08em; border-bottom: 1px solid var(--edge); min-height: 24px; }
+#stat b { color: var(--cult); }
+.zone { padding: 10px 12px; }
+#transport { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--edge); padding: 10px; border-radius: 4px; }
+#play { font-family: inherit; font-size: 13px; letter-spacing: .1em; padding: 10px 18px; cursor: pointer; background: transparent; color: var(--cult); border: 1px solid var(--cult); }
+#play.on { background: var(--cult); color: #140503; box-shadow: 0 0 14px rgba(255, 77, 61, .4); }
+.mini { min-width: 104px; }
+.mini .lbl { font-size: 9px; color: var(--dim); letter-spacing: .12em; display: flex; justify-content: space-between; }
+.mini .rail { height: 26px; background: #1a1112; border: 1px solid var(--edge); position: relative; border-radius: 3px; overflow: hidden; touch-action: none; cursor: ew-resize; }
+.mini .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--acc2); opacity: .55; }
+.mini .val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--txt); letter-spacing: .06em; pointer-events: none; }
+.trk { display: flex; gap: 8px; align-items: center; background: var(--panel); border: 1px solid var(--edge); border-left: 3px solid var(--edge); padding: 7px 8px; margin-top: 6px; border-radius: 3px; }
+.trk.sel { border-left-color: var(--cult); }
+.trk .tname { width: 74px; font-size: 11px; letter-spacing: .06em; cursor: pointer; flex-shrink: 0; }
+.trk.sel .tname { color: var(--cult); }
+.trk .drop { flex: 1; min-width: 60px; border: 1px dashed var(--edge); padding: 6px; font-size: 9px; color: var(--dim); text-align: center; cursor: pointer; border-radius: 3px; }
+.trk .drop.has { border-color: var(--acc2); color: var(--acc2); border-style: solid; }
+#editor { background: var(--panel); border: 1px solid var(--edge); border-radius: 4px; padding: 10px; margin-top: 10px; }
+#editor h2 { font-size: 11px; letter-spacing: .16em; color: var(--cult); margin-bottom: 8px; }
+#editor .section-lbl { font-size: 9px; color: var(--dim); letter-spacing: 0.1em; margin: 6px 0 2px; width: 100%; }
+#editor .row { display: flex; gap: 8px; flex-wrap: wrap; }
+#editor .row .mini { flex: 1; min-width: 96px; }
+#grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin-top: 10px; }
+.pad { aspect-ratio: 1.35; background: #1a1112; border: 1px solid var(--edge); border-radius: 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 9px; color: var(--dim); touch-action: none; position: relative; }
+.pad.on { background: #3d1512; border-color: var(--cult); color: #ffd9d4; }
+.pad.acc { background: var(--cult); border-color: var(--cult); color: #140503; font-weight: 700; }
+.pad.play { outline: 2px solid var(--acc2); outline-offset: 1px; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="faceArrow" data-dir="-1">⫷</span> BΛTTΞRY<b>_CULT</b> <span class="faceArrow" data-dir="1">⫸</span></h1>
+  <div id="subPlate">SRC·D2 AUDIO MODULE · SΛMPLΞR RITUAL · PHASE 1</div>
+  <button id="pwr">⏻ POWER</button>
+</header>
+<div id="stat">⏻ press POWER to wake the machine</div>
+
+<div class="zone">
+  <div id="transport">
+    <button id="play">▶ PLAY</button>
+    <div class="mini" id="tBpm"></div>
+    <div class="mini" id="tSw"></div>
+  </div>
+  <div id="tracks"></div>
+  <div id="editor">
+    <h2 id="edTitle">◈ TRACK 1</h2>
+    <div class="section-lbl">SΛMPLΞ ENGINE</div>
+    <div class="row" id="edRow1"></div>
+    <div class="section-lbl">SYNTH REINFORCEMENT (HEAVY INDUSTRIAL ENGINE)</div>
+    <div class="row" id="edSynthRow1"></div>
+    <div class="row" id="edSynthRow2" style="margin-top:8px"></div>
+    <div class="section-lbl">SEQUENCE</div>
+    <div id="grid"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const NT = 8;
+const TP = [
+  {k:"lvl", n:"LEVEL", min:0, max:1.2, d:0.9, e:"smp"},
+  {k:"pit", n:"PITCH", min:-12, max:12, d:0, fmt:v=>(v>0?"+":"")+v.toFixed(1)+"st", e:"smp"},
+  {k:"pan", n:"PAN", min:-1, max:1, d:0, fmt:v=>Math.abs(v)<0.02?"C":(v<0?"L":"R")+Math.round(Math.abs(v)*100), e:"smp"},
+  {k:"dec", n:"DECAY", min:0.03, max:4, d:4, exp:true, fmt:v=>v.toFixed(2)+"s", e:"smp"},
+  {k:"synMix",n:"SYN MIX", min:0, max:1, d:1.0, fmt:v=>Math.round(v*100)+"%", e:"syn"},
+  {k:"synWave",n:"WAVEFORM", min:0, max:5, d:0, step:true, fmt:v=>["SINE","TRI","SAW","SQ","FM","NOISE"][Math.round(v)], e:"syn"},
+  {k:"synTune",n:"BASE TUNE", min:20, max:400, d:60, exp:true, fmt:v=>Math.round(v)+"Hz", e:"syn"},
+  {k:"synSweep",n:"PITCH SWEEP", min:0, max:1, d:0.5, fmt:v=>Math.round(v*100)+"%", e:"syn"},
+  {k:"synPDec",n:"P-DECAY", min:0.005, max:0.3, d:0.02, exp:true, fmt:v=>v.toFixed(3)+"s", e:"syn"},
+  {k:"synDec",n:"S-DECAY", min:0.02, max:3, d:0.25, exp:true, fmt:v=>v.toFixed(2)+"s", e:"syn"},
+  {k:"synDrive",n:"SYN DRIVE", min:0, max:1, d:0.4, fmt:v=>Math.round(v*100)+"%", e:"syn"}
+];
+
+const DEFAULT_KIT_PARAMS = [
+  [0.9, 0, 0, 4, 1.0, 0, 48, 0.95, 0.012, 0.28, 0.85],
+  [0.85, 0, 0, 4, 1.0, 5, 180, 0.2, 0.03, 0.15, 0.7],
+  [0.75, 0, 0, 4, 1.0, 3, 320, 0.4, 0.005, 0.04, 0.4],
+  [0.8, 0, 0, 4, 1.0, 5, 120, 0.7, 0.08, 0.22, 0.5],
+  [0.7, 0, 0, 4, 1.0, 4, 380, 0.1, 0.01, 0.03, 0.3],
+  [0.75, 0, 0, 4, 1.0, 4, 380, 0.0, 0.01, 0.45, 0.3],
+  [0.8, 0, 0, 4, 1.0, 1, 90, 0.6, 0.04, 0.35, 0.75],
+  [0.95, 0, 0, 4, 1.0, 0, 32, 0.0, 0.01, 2.5, 0.2]
+];
+
+const $=id=>document.getElementById(id);
+let sel=0, playing=false;
+const state={ bpm:120, p:JSON.parse(JSON.stringify(DEFAULT_KIT_PARAMS)), lens:new Array(NT).fill(16), pat:[...Array(NT)].map(()=>new Array(16).fill(0)) };
+for(let i=0;i<NT;i++) state.pat[i][0] = i<4 ? 1 : 0;
+
+function miniFader(el,label,min,max,val,fmt,onset,exp){
+  el.innerHTML='<div class="lbl"><span>'+label+'</span></div><div class="rail"><div class="fill"></div><div class="val"></div></div>';
+  const rail=el.querySelector(".rail"),fill=el.querySelector(".fill"),vv=el.querySelector(".val");
+  let v=val; const toN=x=> exp ? Math.log(x/min)/Math.log(max/min) : (x-min)/(max-min);
+  const toV=nn=> exp ? min*Math.pow(max/min,nn) : min+nn*(max-min);
+  const render=()=>{ fill.style.width=(toN(v)*100)+"%"; vv.textContent=fmt(v); };
+  rail.addEventListener("pointerdown",e=>{ rail.setPointerCapture(e.pointerId); const drag=e=>{ const r=rail.getBoundingClientRect(); const nn=Math.min(1,Math.max(0,((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width)); v=toV(nn); render(); onset(v); }; drag(e); rail.onpointermove=drag; rail.onpointerup=()=>rail.onpointermove=null; });
+  render(); return {set(x){v=x;render();}};
+}
+
+const bpmF=miniFader($("tBpm"),"TEMPO",40,220,state.bpm,v=>Math.round(v)+" BPM",v=>{ state.bpm=Math.round(v); if(window.node) node.port.postMessage(['bpm',state.bpm]); });
+
+window.addEventListener("message", e => {
+  if (!e.data || e.data.src !== 'SUBSTRATE') return;
+  if (e.data.cmd === 'play') {
+    playing = e.data.state;
+    $("play").classList.toggle("on", playing);
+    $("play").textContent = playing ? "■ STOP" : "▶ PLAY";
+    if(window.node) node.port.postMessage(['play', playing?1:0]);
+  }
+});
+</script>
+</body>
+</html>
