@@ -23,8 +23,12 @@ body{background:var(--bg);font-family:'Chakra Petch',monospace;display:flex;flex
 #plate .modDot.atmo{color:#b48aff}
 #plate .modDot.bass{color:#ffd08a}
 .runes{display:flex;gap:4px;margin-left:8px;flex-shrink:0}
+/* Visual state framework for the offline render pipeline */
+.led.ready i { opacity: 1 !important; box-shadow: 0 0 14px 3px var(--c) !important; }
+.led.rendering i { animation: render-pulse 0.8s infinite alternate ease-in-out; }
+@keyframes render-pulse { 0% { opacity: 0.2; } 100% { opacity: 1; box-shadow: 0 0 12px var(--c); } }
 /* EVANSCIRA AR sigils: SVG reticles — corner brackets drawn in, so no
-   text-flow can ever stack them */
+text-flow can ever stack them */
 .rune{background:transparent;border:none;padding:0;cursor:pointer;
   width:38px;height:32px;flex-shrink:0;color:var(--sub)}
 .rune svg{width:100%;height:100%;overflow:visible}
@@ -508,13 +512,19 @@ const FACES=[
 ];
 let face=0;
 
+const readyCaches = {};
+const moduleState = { riot: 'live', cult: 'live', atmos: 'live', bass: 'live' };
+
 function updateChassisStatus() {
   const activeMod = FACES[face] ? FACES[face].mod.toUpperCase() : 'NONE';
+  const readyList = Object.keys(readyCaches).filter(m => moduleState[m] === 'cached').map(m => m.toUpperCase());
   const streamList = Object.keys(streams).map(m => m.toUpperCase());
+
   const statusSpan = document.querySelector('#plate .corp');
   if (statusSpan) {
     statusSpan.innerHTML = `<b>EVANSCIRA</b> // LIVE: [${activeMod}]` + 
-      (streamList.length ? ` · CACHED STREAMS: [${streamList.join(', ')}]` : ` · ALL LIVE`);
+      (readyList.length ? ` · READY: [${readyList.join(', ')}]` : ``) +
+      (streamList.length ? ` · STREAMING: [${streamList.join(', ')}]` : ``);
   }
 }
 
@@ -799,30 +809,38 @@ window.addEventListener('message',async e=>{
   const d=e.data;
   if(!d || d.src!=='srcd-duo') return;
   if(d.cmd==='switch') show(face+(d.dir||1));
-  if(d.cmd==='wl-mount'){
-    const F={riot,cult,atmos:atmo,bass}[d.mod];
-    if(F) wlMount(F.contentWindow, d);
+  if(d.cmd==='wl-mount'){ /* ... existing wl-mount ... */ }
+
+  /* --- The Dynamic Cache Event API --- */
+  if(d.cmd === 'cache-dirty') {
+    moduleState[d.mod] = 'live';
+    const ledKey = {atmos:'lvlC', riot:'lvlA', cult:'lvlB', bass:'lvlD'}[d.mod];
+    const led = document.querySelector(`.led[data-key="${ledKey}"]`);
+    if(led) { led.classList.remove('ready'); led.classList.remove('rendering'); }
+    if (running && typeof nextEdge === 'function') toLive(d.mod, nextEdge());
+    updateChassisStatus();
     return;
   }
+  if(d.cmd === 'cache-commit') {
+    triggerBackgroundRender(d.mod);
+    return;
+  }
+
   if(d.cmd==='wl-send'){
     const n=wlNodes[d.mod];
     if(!n) return;
-
-    /* ALLOW transport/sequence on/off state to pass through to the background node */
     const isTransportMsg = Array.isArray(d.m) && 
       (d.m[0] === 'play' || d.m[0] === 'playat' || d.m[0] === 'seq' || d.m[0] === 'panic');
-
+    
     if (running && streams[d.mod] && !isTransportMsg) return;
-
-    /* and during the launch window the chassis is scheduling the transport to
-       the FRAME — a module's own play button must not race it */
     if (chassisDriving && Array.isArray(d.m) &&
        (d.m[0] === 'play' || d.m[0] === 'playat' ||
         (d.m[0] === 'seq' && d.m[1] && d.m[1].on !== undefined))) return;
-
+    
     n.port.postMessage(d.m);
     return;
   }
+
   if(d.cmd==='wl-kill'){
     const n=wlNodes[d.mod];
     if(n){ try{ n.disconnect(); }catch(_){} }
@@ -1116,6 +1134,11 @@ async function renderStream(mod){
   const n=new AudioWorkletNode(oc,p.processor,
     {outputChannelCount:[2], processorOptions:p.opts||{}});
   n.connect(oc.destination);
+    /* OVERTONE_RIOT OFFLINE SYNC FIX: Force transport on before locking the thread */
+  n.port.postMessage(['play', 1]);
+  n.port.postMessage(['playat', 0]);
+  /* Yield main thread to allow cross-thread postMessage to arrive */
+  await new Promise(r => setTimeout(r, 25));
   const buf=await oc.startRendering();
   const cut=Math.round(g.warmS*g.rate);
   const L=new Float32Array(buf.getChannelData(0).subarray(cut, cut+g.mainN+g.xfN));
@@ -1124,6 +1147,31 @@ async function renderStream(mod){
   const ab=mctx.createBuffer(2,g.mainN,g.rate);
   ab.copyToChannel(FL,0); ab.copyToChannel(FR,1);
   return ab;
+}
+async function triggerBackgroundRender(mod) {
+  const ledKey = {atmos:'lvlC', riot:'lvlA', cult:'lvlB', bass:'lvlD'}[mod];
+  const led = document.querySelector(`.led[data-key="${ledKey}"]`);
+  
+  if(led) { led.classList.remove('ready'); led.classList.add('rendering'); }
+  
+  try {
+    const ab = await renderStream(mod);
+    if(ab) {
+      readyCaches[mod] = ab;
+      moduleState[mod] = 'cached';
+      
+      if(led) { led.classList.remove('rendering'); led.classList.add('ready'); }
+      updateChassisStatus();
+
+      /* If transport is rolling, smoothly crossfade the cache in at the next edge */
+      if (running) {
+         startStream(mod, ab, nextEdge(), false);
+      }
+    }
+  } catch(e) {
+    if(led) led.classList.remove('rendering');
+    console.warn("Background cache build failed for", mod, e);
+  }
 }
 /* the next loop downbeat, snapped to the BLOCK GRID so the buffer (sample-exact)
    and the worklet (block-exact) can land on the very same frame */
