@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>EVANSCIRA LABS // SUBSTRΛTΞ</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050607;--edge:#1c2226;--txt:#cfd8dc;--dim:#5c686e;
+  --riot:#43ffa4;--cult:#ff4d3d;--sub:#8ab8ff}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);font-family:'Chakra Petch',monospace;display:flex;flex-direction:column;
+  user-select:none;-webkit-user-select:none}
+#plate{display:flex;align-items:center;gap:10px;padding:7px 12px;
+  border-bottom:1px solid var(--edge);background:#07090b;flex-shrink:0}
+#plate .corp{font-size:9px;letter-spacing:.3em;color:var(--dim);
+  flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#plate .corp b{color:var(--txt);font-weight:600}
+#plate .modDot{font-size:9px;letter-spacing:.14em;flex-shrink:0;padding:3px 6px;
+  border:1px solid var(--edge);border-radius:3px;transition:color .25s}
+#plate .modDot.riot{color:var(--riot)} #plate .modDot.cult{color:var(--cult)}
+#plate .modDot.atmo{color:#b48aff}
+#plate .modDot.bass{color:#ffd08a}
+.runes{display:flex;gap:4px;margin-left:8px;flex-shrink:0}
+/* EVANSCIRA AR sigils: SVG reticles — corner brackets drawn in, so no
+   text-flow can ever stack them */
+.rune{background:transparent;border:none;padding:0;cursor:pointer;
+  width:38px;height:32px;flex-shrink:0;color:var(--sub)}
+.rune svg{width:100%;height:100%;overflow:visible}
+.rune .crn{fill:none;stroke:var(--dim);stroke-width:1.4;opacity:.7}
+.rune .gly{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;
+  filter:drop-shadow(0 0 4px currentColor)}
+.rune:active .gly{fill:currentColor;fill-opacity:.25}
+#capBtn .g-save{display:none}
+#capBtn.rec{color:var(--cult)}
+
+#capBtn.rec .g-rec{display:none}
+#capBtn.rec .g-save{display:block;animation:pulse 1.1s infinite}
+@keyframes pulse{50%{opacity:.35;filter:drop-shadow(0 0 1px currentColor)}}
+#xClose{font-family:inherit;font-size:12px;background:transparent;color:var(--dim);
+  border:1px solid var(--edge);padding:5px 11px;cursor:pointer;letter-spacing:.1em;
+  border-radius:3px;margin-left:8px;flex-shrink:0;white-space:nowrap}
+#xClose:active{color:var(--txt)}
+/* ═ the SUBSTRΛTΞ mixer: discreet LEDs, faders on demand ═ */
+#mixer{display:flex;gap:6px;align-items:center;padding:5px 10px;
+  border-bottom:1px solid var(--edge);background:#060809;flex-shrink:0}
+#dots{display:flex;gap:4px;flex:1;min-width:0}
+.led{font-family:inherit;font-size:8px;letter-spacing:.1em;color:var(--dim);
+  background:transparent;border:none;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;gap:3px;padding:2px 5px;min-width:34px}
+.led i{width:8px;height:8px;border-radius:50%;background:var(--c);
+  box-shadow:0 0 6px var(--c);opacity:.85;transition:transform .15s}
+.led.open{color:var(--txt)}
+.led.open i{transform:scale(1.5);box-shadow:0 0 12px var(--c)}
+#meter{font-size:11px;letter-spacing:.06em;color:var(--dim);min-width:66px;
+  text-align:right;font-variant-numeric:tabular-nums}
+#meter.g{color:var(--riot)} #meter.a{color:#ffb03d} #meter.r{color:var(--cult)}
+#expand{display:none;padding:8px 12px 10px;border-bottom:1px solid var(--edge);
+  background:#04070a}
+#expand.open{display:block}
+#expand .xlbl{display:flex;justify-content:space-between;font-size:9px;
+  letter-spacing:.14em;color:var(--dim);margin-bottom:4px}
+#expand .xlbl .v{color:var(--txt);font-size:11px}
+#expand .rail{height:34px;background:#0c1013;border:1px solid var(--edge);
+  position:relative;border-radius:4px;overflow:hidden;touch-action:none;cursor:ew-resize}
+#expand .fill{position:absolute;left:0;top:0;bottom:0;background:var(--sub);opacity:.55}
+#expand .gr{position:absolute;right:0;top:0;bottom:0;background:#ffb03d;opacity:.7;width:0}
+#expand select{font-family:inherit;font-size:10px;background:#0c1013;color:var(--sub);
+  border:1px solid var(--edge);padding:5px;border-radius:3px;margin-bottom:6px;width:100%}
+#thumbBub{position:fixed;display:none;background:#0c1013;border:1px solid var(--sub);
+  color:var(--txt);font-size:12px;padding:3px 8px;border-radius:3px;pointer-events:none;
+  z-index:50;transform:translate(-50%,-140%);letter-spacing:.04em}
+#capCfg{display:none;background:#0a0d10;border-bottom:1px solid var(--edge);
+  padding:8px 12px;align-items:center;gap:7px;flex-wrap:wrap;flex-shrink:0}
+#capCfg.show{display:flex}
+#capCfg .cl{font-size:8px;letter-spacing:.14em;color:var(--dim)}
+#capCfg input,#capCfg select{font-family:inherit;font-size:11px;background:#0c1013;
+  color:var(--txt);border:1px solid var(--edge);padding:5px;border-radius:3px;width:auto}
+#capCfg input{width:52px}
+#capCfg button{font-family:inherit;font-size:10px;letter-spacing:.08em;background:transparent;
+  color:var(--sub);border:1px solid var(--sub);padding:6px 10px;border-radius:3px;cursor:pointer}
+#capCfg #cGo{color:var(--riot);border-color:var(--riot)}
+#saveChip{display:none;background:#140a0b;border-bottom:1px solid var(--cult);
+  color:var(--txt);font-size:12px;letter-spacing:.06em;padding:10px 14px;
+  text-decoration:none;text-align:center;flex-shrink:0;
+  box-shadow:inset 0 0 20px rgba(255,77,61,.15)}
+#saveChip.show{display:block}
+/* in normal flow between mixer and faces: nothing can cover it */
+#faces{position:relative;flex:1;overflow:hidden}
+.face{position:absolute;inset:0;border:0;width:100%;height:100%;
+  transition:transform .28s cubic-bezier(.6,0,.3,1),visibility .28s}
+.face.off-l{transform:translateX(-102%);visibility:hidden;pointer-events:none}
+.face.off-r{transform:translateX(102%);visibility:hidden;pointer-events:none}
+.face.on{transform:translateX(0);visibility:visible}
+#hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  font-size:9px;color:var(--dim);letter-spacing:.14em;pointer-events:none;
+  opacity:1;transition:opacity 1s;text-align:center;width:92%}
+</style>
+</head>
+<body>
+<div id="plate">
+  <div class="corp"><b>EVANSCIRA</b> LABS // SUBSTRΛTΞ</div>
+  <div class="modDot atmo" id="modName" title="active face">M01</div>
+  <div class="runes">
+    <button id="runAll" class="rune" title="start every powered face">
+      <svg viewBox="0 0 36 30">
+        <path class="crn" d="M2 9V2h7M27 2h7v7M34 21v7h-7M9 28H2v-7"/>
+        <path class="gly" d="M14 9.5L25 15l-11 5.5z"/>
+      </svg></button>
+    <button id="stopAll" class="rune" title="stop every powered face">
+      <svg viewBox="0 0 36 30">
+        <path class="crn" d="M2 9V2h7M27 2h7v7M34 21v7h-7M9 28H2v-7"/>
+        <rect class="gly" x="13" y="10" width="10" height="10"/>
+      </svg></button>
+    <button id="capBtn" class="rune" title="record the session bus — exactly as heard; tap again to stop & save">
+      <svg viewBox="0 0 36 30">
+        <path class="crn" d="M2 9V2h7M27 2h7v7M34 21v7h-7M9 28H2v-7"/>
+        <circle class="gly g-rec" cx="18" cy="15" r="5.5"/>
+        <g class="gly g-save">
+          <path d="M18 7v9M13.5 12.5L18 17l4.5-4.5"/>
+          <path d="M11 21.5h14"/>
+        </g>
+      </svg></button>
+  </div>
+  <button id="xClose">✕ CONSOLE</button>
+</div>
+
+<div id="mixer">
+  <div id="dots">
+    <button class="led" id="dAtmo"  data-key="lvlC"   style="--c:#b48aff"><i></i>ATMO</button>
+    <button class="led" id="dRiot"  data-key="lvlA"   style="--c:var(--riot)"><i></i>RIOT</button>
+    <button class="led" id="dCult"  data-key="lvlB"   style="--c:var(--cult)"><i></i>CULT</button>
+    <button class="led" id="dBass"  data-key="lvlD"   style="--c:#ffd08a"><i></i>MRRW</button>
+    <button class="led" id="dSC"    data-key="duckLaw"style="--c:var(--sub)"><i></i>SC</button>
+    <button class="led" id="dGlue"  data-key="glue"   style="--c:#ffb03d"><i></i>GLUE</button>
+    <button class="led" id="dMas"   data-key="master" style="--c:#e8eef3"><i></i>MST</button>
+  </div>
+  <div id="meter" title="session bus level, pre-limiter — aim around −6 dB">−∞ dB</div>
+</div>
+<div id="expand"></div>
+<div id="capCfg">
+  <span class="cl">BPM</span><input id="cBpm" type="number" min="40" max="220" value="120" inputmode="numeric">
+  <span class="cl">BARS</span><select id="cBars"><option>1</option><option selected>2</option><option>4</option><option>8</option></select>
+  <span class="cl">TAIL</span><select id="cTail"><option value="cut">cut · seamless</option>
+    <option value="1">1s ring-out</option><option value="2" selected>2s ring-out</option><option value="4">4s ring-out</option></select>
+  <button id="cGo">⏱ LOOP GRAB</button>
+  <button id="cFree">⏺ FREE REC</button>
+</div>
+<a id="saveChip"></a>
+<div id="thumbBub"></div>
+
+<div id="faces">
+  <iframe class="face on" id="fAtmo" src="vapor_throne.html" allow="autoplay"></iframe>
+  <iframe class="face off-r" id="fRiot" data-src="overtone_riot.html" allow="autoplay"></iframe>
+  <iframe class="face off-r" id="fCult" data-src="battery_cult.html" allow="autoplay"></iframe>
+  <iframe class="face off-r" id="fBass" data-src="marrow.html" allow="autoplay"></iframe>
+  <div id="hint">⫷ ⫸ IN A MODULE TITLE SWITCHES THE FACE · BOTH ENGINES STAY LIVE ·
+    THE STRIP ABOVE IS THE SESSION MIXER — LEVELS, MODULE⤓MODULE SIDECHAIN, GLUE, MASTER</div>
+</div>
+
+<script>
+"use strict";
+/* ═════════ EVANSCIRA LABS // SUBSTRΛTΞ ═════════
+   Unified low-end session console. Hosts MODULE 01 (OVERTONE_RIOT — sub /
+   808 / pluck synthesis) and MODULE 02 (BΛTTΞRY CULT — sampler percussion)
+   as live faces over one session mixer: per-module level, module⤓module
+   sidechain, master GLUE compression, master fader. Levels + duck + glue
+   only — no plugin processing lives here; the modules are the instruments.
+   Dashboard contract: ✕ posts {src:'srcd-duo', cmd:'close'} when embedded.
+   Rebrand point: the one string below.                                   */
+const BRAND = "EVANSCIRA LABS // SUBSTRΛTΞ";
+
+const MIXER_WORKLET = `
+class SubstrateMix extends AudioWorkletProcessor {
+  static get parameterDescriptors(){ return [
+    {name:'lvlA', defaultValue:0.9, minValue:0, maxValue:1},
+    {name:'lvlB', defaultValue:0.9, minValue:0, maxValue:1},
+    {name:'lvlC', defaultValue:0.8, minValue:0, maxValue:1},
+    {name:'lvlD', defaultValue:0.85, minValue:0, maxValue:1},
+    {name:'duckA', defaultValue:0.45, minValue:0, maxValue:1},  /* ⤓RIOT  */
+    {name:'duckC', defaultValue:0.70, minValue:0, maxValue:1},  /* ⤓ATMOS */
+    {name:'duckD', defaultValue:0.55, minValue:0, maxValue:1},  /* ⤓MRRW  */
+    {name:'yieldC', defaultValue:0.8, minValue:0, maxValue:1},  /* abyss yield */
+    {name:'glue', defaultValue:0, minValue:0, maxValue:1},
+    {name:'glueHp', defaultValue:0.6, minValue:0, maxValue:1},  /* detector HPF
+      · 0→20Hz (defeat) … 1→400Hz · hz = 20 * 20^v, twinned in the UI */
+    {name:'yieldB', defaultValue:0.5, minValue:0, maxValue:1},  /* BΞDROCK YIELD */
+    {name:'master', defaultValue:0.9, minValue:0, maxValue:1},
+  ];}
+  constructor(){ super();
+    this.rec=false; this.recL=[]; this.recR=[]; this.recTotal=0;
+    this.stgL=new Float32Array(8192); this.stgR=new Float32Array(8192); this.stgN=0;
+    /* GEMINI'S CATCH (verified): this.recL.push(new Float32Array(L)) every
+       128-sample block was a fresh allocation ~375 times/sec on the render
+       thread for the WHOLE duration of a live record — real GC pressure on
+       a phone. STAGING FIX: accumulate into one reused 8192-sample buffer,
+       copy out only when it's full. 64x fewer allocations, and they land on
+       a ~170ms boundary instead of every single render callback.
+       lpBufL/R are for LOOP capture specifically: that length is known
+       EXACTLY at arm time, so it's pre-allocated once — zero allocation
+       anywhere in its capture window at all, staging or otherwise. */
+    this.lpBufL=null; this.lpBufR=null; this.lpWrite=0;
+    this.port.onmessage = e => {
+      if(e.data[0]==='rec'){
+        if(e.data[1]){ this.recL=[]; this.recR=[]; this.rec=true;
+          this.stgN=0; this.recTotal=0;   /* a fresh take must never inherit
+            a stale partial chunk or the previous take's ceiling count */
+          this.port.postMessage(['recack',1,0]);
+        } else if(this.rec){
+          this.rec=false;
+          this.flushRecStaging();      /* the tail: whatever hadn't filled a
+            full 8192-sample chunk yet would otherwise be silently dropped */
+          this.port.postMessage(['recack',0,this.recL.length]);
+          this.sendParts();            /* each chunk is ALREADY a safe part
+            size — this used to re-group 128-sample buffers into parts AFTER
+            the fact; the staging buffer means that regrouping is now done
+            up front, for free, as the recording happens. */
+        } else {
+          this.port.postMessage(['recack',-1,0]);  /* stop with nothing armed */
+        }
+      }
+      if(e.data[0]==='recloop'){
+        /* scheduled capture: skip pre samples (one warm loop — FX build
+           exactly like RIOT's offline pre-roll), record main+tail samples
+           SAMPLE-EXACTLY (partial blocks sliced), announce the main/tail
+           edge so the chassis can stop the transport for ring-out tails */
+        this.lp={pre:e.data[1], main:e.data[2], tail:e.data[3], cnt:0};
+        this.rec=false;
+        /* the keep-length is KNOWN exactly, right now — pre-allocate once.
+           Zero allocation anywhere in the capture window that follows. */
+        const keep=e.data[2]+e.data[3];
+        this.lpBufL=new Float32Array(keep); this.lpBufR=new Float32Array(keep);
+        this.lpWrite=0;
+        this.port.postMessage(['loopack', e.data[1], e.data[2], e.data[3]]);
+      }
+      if(e.data[0]==='recloopcancel'){ this.lp=null; this.lpBufL=null; this.lpBufR=null; this.lpWrite=0; }
+      if(e.data[0]==='extc'){ this.extC=e.data[1]?1:0; }
+    };
+    this.envA=0; this.envB=0; this.envD=0; this.cEnv=0; this.gr=1; this.pk=0;
+    this.hL1=0; this.hL2=0; this.hR1=0; this.hR2=0;   /* glue detector HPF */
+    /* ═ SUB-OCCUPANCY DETECTOR ═
+       BΞDROCK stands through a KICK and always should: measured correlation
+       between the floor and a four-on-the-floor kick is 0.04 — a transient and
+       a drone barely touch each other. But a sustained 808 is not a hit, it is
+       a NOTE, and two sustained subs in the same octave BEAT: 13-16 dB of
+       envelope wobble on a dissonant interval, and −5.7 dB of outright
+       cancellation at unison. You cannot EQ or duck your way out of that; it is
+       phase, not level.
+       A kick and an 808 live at the SAME frequencies. The only thing that
+       separates them is TIME — so this follower is deliberately SLOW (≈120ms
+       attack). A kick is gone before it can respond; an 808 sustains long
+       enough to drive it fully. Measured separation: 11.9 dB.
+       Detector listens to RIOT + MΛRROW only. CULT is percussion by definition
+       and its kick is already governed by the duck law — letting it in here
+       would be asking the detector to un-learn the very thing it exists to do. */
+    this.sbL1=0; this.sbL2=0; this.sbEnv=0; this.bedG=1; this.bedT=1;
+    this.extC=0;   /* ATMOS law routing. 0 = apply duck+yield HERE (legacy,
+       whole channel — would flatten BEDROCK too). 1 = the M01 face declared
+       lawcap: the mixer keeps COMPUTING the law (the brain stays in the
+       chassis) but FORWARDS it for internal application — throne only,
+       the felt floor never flinches. */
+    /* per-channel duck gains with DOCTRINE recovery constants:
+       MΛRROW returns fastest (the sub must come back), RIOT medium,
+       ATMOS slowest (it is the bed, not the punch) */
+    this.dgA=1; this.dgC=1; this.dgD=1;
+    this.relA=1-Math.exp(-1/(0.18*sampleRate));
+    this.relC=1-Math.exp(-1/(0.35*sampleRate));
+    this.relD=1-Math.exp(-1/(0.12*sampleRate));
+    this.cLoL=0; this.cLoR=0;                    /* ATMOS low split (yield) */
+    this.kLo=1-Math.exp(-2*Math.PI*110/sampleRate);
+    this.aA=1-Math.exp(-1/(0.003*sampleRate));
+    this.aR=1-Math.exp(-1/(0.14*sampleRate));
+    this.cR=1-Math.exp(-1/(0.15*sampleRate));    /* glue: 150 ms release;
+                                                    attack is INSTANT — an
+                                                    8 ms attack let transients
+                                                    leak past the detector and
+                                                    the makeup then AMPLIFIED
+                                                    them (crest went up) */
+    this.fr=0;
+  }
+  pushRec(L,R,n){
+    let o=0;
+    while(o<n){
+      const take=Math.min(n-o, 8192-this.stgN);
+      this.stgL.set(L.subarray(o,o+take), this.stgN);
+      this.stgR.set(R.subarray(o,o+take), this.stgN);
+      this.stgN+=take; o+=take;
+      if(this.stgN>=8192){
+        this.recL.push(new Float32Array(this.stgL));
+        this.recR.push(new Float32Array(this.stgR));
+        this.stgN=0;
+      }
+    }
+    this.recTotal+=n;
+  }
+  flushRecStaging(){                 /* catch a partial trailing chunk on stop */
+    if(this.stgN>0){
+      this.recL.push(new Float32Array(this.stgL.subarray(0,this.stgN)));
+      this.recR.push(new Float32Array(this.stgR.subarray(0,this.stgN)));
+      this.stgN=0;
+    }
+  }
+  sendParts(){                       /* each recL[i]/recR[i] is ALREADY a safe
+      on-device part size (≤8192 samples = ≤32KB/ch) — no re-grouping needed,
+      unlike the old array of 128-sample buffers that had to be concatenated
+      into parts after the fact. Ship each chunk as its own part, in order. */
+    const parts=this.recL.length;
+    try{
+      for(let g2=0; g2<parts; g2++)
+        this.port.postMessage(['wavpart', g2, parts, this.recL[g2], this.recR[g2]]);
+      this.port.postMessage(['wavend', parts]);
+    }catch(err){ this.port.postMessage(['recerr', String(err&&err.message||err)]); }
+    this.recL=[]; this.recR=[]; this.recTotal=0;
+  }
+  process(inputs, outputs, P){
+    const A=inputs[0], B=inputs[1], Cn=inputs[2], Dn=inputs[3], out=outputs[0];
+    const L=out[0], R=out[1]||out[0], n=L.length;
+    const lvlA=P.lvlA[0], lvlB=P.lvlB[0], lvlC=P.lvlC[0], lvlD=P.lvlD[0],
+          dkA=P.duckA[0], dkC=P.duckC[0], dkD=P.duckD[0], yC=P.yieldC[0],
+          glue=P.glue[0], mas=P.master[0], ghp=P.glueHp[0], ybed=P.yieldB[0];
+    const THR=0.32, INVR=1-1/3;                  /* glue: soft 3:1 over −10 dB */
+    const kD=1-Math.exp(-6.28318530718*(20*Math.pow(20,ghp))/sampleRate);
+    const kSB=1-Math.exp(-6.28318530718*90/sampleRate);          /* 90Hz, 2-pole */
+    const kSA=1-Math.exp(-1/(0.120*sampleRate));                 /* 120ms attack */
+    const kSR=1-Math.exp(-1/(0.250*sampleRate));                 /* 250ms release */
+    for(let s=0;s<n;s++){
+      const aL=A&&A[0]?A[0][s]:0, aR=A&&A[1]?A[1][s]:(A&&A[0]?A[0][s]:0);
+      const bL=B&&B[0]?B[0][s]:0, bR=B&&B[1]?B[1][s]:(B&&B[0]?B[0][s]:0);
+      const inCL=Cn&&Cn[0]?Cn[0][s]:0, inCR=Cn&&Cn[1]?Cn[1][s]:(Cn&&Cn[0]?Cn[0][s]:0);
+      const inDL=Dn&&Dn[0]?Dn[0][s]:0, inDR=Dn&&Dn[1]?Dn[1][s]:(Dn&&Dn[0]?Dn[0][s]:0);
+      /* sidechain followers on the pre-level module signals */
+      const am=Math.max(aL<0?-aL:aL, aR<0?-aR:aR);
+      const bm=Math.max(bL<0?-bL:bL, bR<0?-bR:bR);
+      this.envA += (am-this.envA)*(am>this.envA?this.aA:this.aR);
+      this.envB += (bm-this.envB)*(bm>this.envB?this.aA:this.aR);
+      const dmm=Math.max(inDL<0?-inDL:inDL, inDR<0?-inDR:inDR);
+      this.envD += (dmm-this.envD)*(dmm>this.envD?this.aA:this.aR);
+      /* ═ SIDECHAIN LAW: the drums are THE pump source. Per-channel
+         depths, per-channel recovery — percussion rents TIME, and this
+         is the eviction machinery that makes the lease enforceable. ═ */
+      const dF=Math.min(1,this.envB*2.5);
+      const tA=1-dkA*0.9*dF, tC=1-dkC*0.9*dF, tD=1-dkD*0.9*dF;
+      this.dgA = tA<this.dgA ? tA : this.dgA+(tA-this.dgA)*this.relA;
+      this.dgC = tC<this.dgC ? tC : this.dgC+(tC-this.dgC)*this.relC;
+      this.dgD = tD<this.dgD ? tD : this.dgD+(tD-this.dgD)*this.relD;
+      /* ═ ABYSS YIELD (zoning decree, automated): the <110Hz slice is
+         single-occupancy. MΛRROW's presence evicts ATMOS's lows; when
+         MΛRROW goes silent, ATMOS gets the abyss back. ═ */
+      this.cLoL += (inCL-this.cLoL)*this.kLo;
+      this.cLoR += (inCR-this.cLoR)*this.kLo;
+      const yv=yC*Math.min(1,this.envD*3);
+      const cUL=inCL-this.cLoL*yv, cUR=inCR-this.cLoR*yv;
+      /* ═ SUB-OCCUPANCY: the floor steps aside for a NOTE, never for a HIT ═
+         RIOT + MΛRROW, mono-summed, low-passed to 90Hz, then a deliberately
+         SLOW follower. This is the whole trick: a kick and an 808 sit in the
+         SAME frequencies and only TIME tells them apart. */
+      const sbIn=(aL+aR+inDL+inDR)*0.5;
+      this.sbL1 += (sbIn-this.sbL1)*kSB;
+      this.sbL2 += (this.sbL1-this.sbL2)*kSB;
+      const sbA=this.sbL2<0?-this.sbL2:this.sbL2;
+      this.sbEnv += (sbA-this.sbEnv)*(sbA>this.sbEnv?kSA:kSR);
+      /* SQUARED, not linear. A linear map wastes the detector: the 808 slams
+         into the clamp while the kick still climbs a third of the way, and the
+         11.9 dB the follower worked so hard to separate collapses to under 4.
+         Squaring is an expander — it holds the quiet thing down and lets the
+         loud thing through — and x*x is free, which pow() is not. */
+      const sbq=this.sbEnv*2.5;
+      this.bedT = 1 - ybed*Math.min(1, sbq*sbq);
+      this.bedG += (this.bedT-this.bedG)*0.0008;   /* ~26ms smoothing: this gain
+        travels to M01 over a message pipe, so it must arrive already gentle */
+      const cGL=this.extC?inCL:cUL, cGR=this.extC?inCR:cUR,
+            gC=this.extC?1:this.dgC;             /* law exported: raw ATMOS through */
+      let L0=aL*lvlA*this.dgA + bL*lvlB + cGL*lvlC*gC + inDL*lvlD*this.dgD;
+      let R0=aR*lvlA*this.dgA + bR*lvlB + cGR*lvlC*gC + inDR*lvlD*this.dgD;
+      /* GLUE: peak-following feed-forward comp, parallel-blended.
+         The detector LISTENS HIGH-PASSED and the gain lands FULL-BAND.
+         A broadband detector is how the floor ends up paying for the drums:
+         with VAPOR+MΛRROW in, the drum layer measured 3.7 dB down against the
+         same take with them off — and it did NOT track the sub envelope, so it
+         was not the sidechain ducking, it was GLUE parked on a near-constant
+         pull because a continuous sub floor is, to a full-band detector, just
+         "everything got louder". Zoning is a FREQUENCY doctrine; a full-band
+         detector re-couples the zones at the master and quietly undoes it.
+         Two cascaded one-poles = 12 dB/oct. At HPF 0 the poles sit at 20 Hz
+         and this is the old behaviour, defeated. */
+      this.hL1+=(L0-this.hL1)*kD; const h1=L0-this.hL1;
+      this.hL2+=(h1-this.hL2)*kD; const dL=h1-this.hL2;
+      this.hR1+=(R0-this.hR1)*kD; const h2=R0-this.hR1;
+      this.hR2+=(h2-this.hR2)*kD; const dR=h2-this.hR2;
+      const pk=Math.max(dL<0?-dL:dL, dR<0?-dR:dR);
+      if(pk>this.cEnv) this.cEnv=pk;             /* instant attack */
+      else this.cEnv += (pk-this.cEnv)*this.cR;
+      const over=this.cEnv/THR;
+      const grT = over>1 ? Math.pow(over,-INVR) : 1;
+      this.gr += (grT-this.gr)*0.2;              /* smoothed gain move */
+      const mk=1.2;                               /* makeup */
+      const cL=L0*this.gr*mk, cR=R0*this.gr*mk;
+      L0 = L0*(1-glue) + cL*glue;
+      R0 = R0*(1-glue) + cR*glue;
+      const preL=L0*mas*1.1, preR=R0*mas*1.1;   /* meter reads PRE-limiter:
+                                                     clip risk visible before
+                                                     the tanh hides it */
+      const pa=Math.max(preL<0?-preL:preL, preR<0?-preR:preR);
+      if(pa>this.pk) this.pk=pa;
+      if(this.hL1>-1e-15&&this.hL1<1e-15) this.hL1=0;   /* subnormals stall ARM */
+      if(this.hL2>-1e-15&&this.hL2<1e-15) this.hL2=0;
+      if(this.hR1>-1e-15&&this.hR1<1e-15) this.hR1=0;
+      if(this.hR2>-1e-15&&this.hR2<1e-15) this.hR2=0;
+      L[s]=Math.tanh(preL);
+      R[s]=Math.tanh(preR);
+    }
+    if(this.lp){
+      const T=this.lp, all=T.pre+T.main+T.tail;
+      let o=0;
+      while(o<n && this.lp){
+        const here=T.cnt+o;
+        if(here<T.pre){                           /* warm phase: skip */
+          o += Math.min(n-o, T.pre-here);
+        } else if(here<all){
+          const take=Math.min(n-o, all-here);
+          this.lpBufL.set(L.subarray(o,o+take), this.lpWrite);
+          this.lpBufR.set(R.subarray(o,o+take), this.lpWrite);
+          this.lpWrite+=take;
+          /* loopedge posts ~21ms EARLY: the stop-all it triggers must cross
+             UI + iframe boundaries, so we lead the target by the typical
+             latency. Capture window is untouched (sample-exact); this only
+             tightens WHEN the transport halts for the ring-out. Seamless
+             cut mode never stops transport, so it is immune entirely. */
+          const edgeAt=Math.max(T.pre+64, T.pre+T.main-1024);
+          if(here<edgeAt && here+take>=edgeAt)
+            this.port.postMessage(['loopedge']);
+          o += take;
+        } else break;
+      }
+      if(this.lp){
+        T.cnt += n;
+        if(T.cnt>=all){
+          this.lp=null;
+          /* chunk STRAIGHT OUT of the one pre-allocated buffer — no more
+             concatenating many small pieces back together first. Each slice
+             copy is still an allocation, but there are only ~keep/8192 of
+             them (a handful, for a typical loop), all happening in one tight
+             loop AFTER the capture window has already closed — not during
+             it, and not competing with anything real-time. */
+          const GRP=8192, parts=Math.ceil(this.lpWrite/GRP);
+          try{
+            for(let g2=0; g2<parts; g2++){
+              const a0=g2*GRP, a1=Math.min(this.lpWrite,a0+GRP);
+              this.port.postMessage(['wavpart', g2, parts,
+                new Float32Array(this.lpBufL.subarray(a0,a1)),
+                new Float32Array(this.lpBufR.subarray(a0,a1))]);
+            }
+            this.port.postMessage(['wavend', parts]);
+          }catch(err){ this.port.postMessage(['recerr', String(err&&err.message||err)]); }
+          this.lpBufL=null; this.lpBufR=null; this.lpWrite=0;
+        }
+      }
+    }
+    if(this.rec){
+      this.pushRec(L,R,n);
+      /* ═ THE CEILING, HONESTLY ═
+         It used to say 10 minutes. Stereo float32 at 48k is 384 KB/sec, so ten
+         minutes is 230 MB sitting in the worklet heap — and the hand-off to the
+         main thread briefly DOUBLES it. On a phone that is not a capture, it is
+         an out-of-memory kill. The number was fiction in a loop-based instrument
+         that never needed it.
+         Worse: hitting it stopped the recording, posted 'recfull', and THREW THE
+         AUDIO AWAY — the main thread only arms wavParts on 'recack'/'loopack',
+         and neither fired here. The UI said "file incoming" and no file ever came.
+         120 seconds = 46 MB, ~92 MB across the hand-off. And now it DELIVERS. */
+      if(this.recTotal > sampleRate*120){
+        this.rec=false;
+        this.flushRecStaging();
+        this.port.postMessage(['recfull', this.recTotal/sampleRate]);
+        this.port.postMessage(['recack', 0, this.recL.length]);
+        this.sendParts();                        /* the file actually arrives now */
+      }
+    }
+    if(this.extC && (this.fr&3)===0){
+      /* relay the LAW, not the audio: dgC carries the 350ms doctrine
+         recovery, yv the abyss eviction. M01 slews 12ms on arrival so the
+         94Hz staircase never zippers. Onset crosses worklet→main→iframe
+         (~10-30ms) — the kick that caused the duck masks that window. */
+      this.port.postMessage(['claw', this.dgC, yC*Math.min(1,this.envD*3), this.bedG]);
+    }
+    if((this.fr++&15)===0){
+      this.port.postMessage(['gr', this.gr]);
+      this.port.postMessage(['lv', 20*Math.log10(this.pk+1e-9)]);
+      this.pk*=0.5;                              /* decaying peak-hold */
+    }
+    return true;
+  }
+}
+registerProcessor('substrate-mix', SubstrateMix);
+`;
+
+const $=id=>document.getElementById(id);
+const atmo=$('fAtmo'), riot=$('fRiot'), cult=$('fCult'), bass=$('fBass'), modName=$('modName');
+/* session order = creative order: mood → line → beat */
+const FACES=[
+  {el:atmo, tag:'M01', cls:'atmo', loaded:true,  mod:'atmos'},
+  {el:riot, tag:'M02', cls:'riot', loaded:false, mod:'riot'},
+  {el:cult, tag:'M03', cls:'cult', loaded:false, mod:'cult'},
+  {el:bass, tag:'M04', cls:'bass', loaded:false, mod:'bass'},
+];
+let face=0;
+function show(f){
+  face=(f+FACES.length)%FACES.length;
+  const F=FACES[face];
+  if(!F.loaded){ F.el.src=F.el.dataset.src; F.loaded=true; }
+  FACES.forEach((q,i)=>{
+    q.el.className='face '+(i===face?'on':(i<face?'off-l':'off-r'));
+    /* Hidden faces are moved with transform + visibility, NOT display:none — so
+       the browser keeps compositing them and their requestAnimationFrame loops
+       KEEP RUNNING. Four oscilloscope canvases at 60fps, three of them for
+       nobody. On a phone that main-thread load is what starves the audio
+       threads. Tell each face whether anyone is actually looking. */
+    try{ q.el.contentWindow.postMessage({src:'srcd-duo',cmd:'face',
+      on:(i===face)?1:0},'*'); }catch(_){}
+  });
+  /* the face on show goes LIVE; whatever you just left becomes a stream. That is
+     the entire feature, it is one line, and you will never see it happen. */
+  if(running) reconcile();
+  modName.textContent=F.tag;
+  modName.className='modDot '+F.cls;
+}
+
+/* ═ session mixer ═ */
+let mctx=null, mix=null;
+const conf=(()=>{ try{ return JSON.parse(localStorage.getItem('substrate.mix.v1'))||{}; }
+  catch(_){ return {}; } })();
+const clamp01=v=>Math.min(1,Math.max(0,+v||0));
+const st={ lvlA:clamp01(conf.lvlA??0.9), lvlB:clamp01(conf.lvlB??0.9),
+  duckA:clamp01(conf.duckA??(conf.duckMode==1||conf.duckMode==4?conf.duckAmt:0.45)),
+  duckC:clamp01(conf.duckC??(conf.duckMode==3||conf.duckMode==4?conf.duckAmt:0.7)),
+  duckD:clamp01(conf.duckD??(conf.duckMode==5||conf.duckMode==4?conf.duckAmt:0.55)),
+  yieldC:clamp01(conf.yieldC??0.8),
+  glue:clamp01(conf.glue??0), glueHp:clamp01(conf.glueHp??0.6),
+  yieldB:clamp01(conf.yieldB??0.5),
+  master:clamp01(conf.master??0.9),
+  lvlC:clamp01(conf.lvlC??0.8), lvlD:clamp01(conf.lvlD??0.85),
+  capBpm:conf.capBpm??120 };
+/* all channels read 0–100% — no mystery headroom above 100 */
+function save(){ try{ localStorage.setItem('substrate.mix.v1',JSON.stringify(st)); }catch(_){} }
+function setP(k,v){ st[k]=v; save();
+  if(mix) mix.parameters.get(k).setTargetAtTime(v, mctx.currentTime, 0.02); }
+
+/* ═ LED dots → one expanding fader at a time; value bubble rides the
+   thumb so you can read the % exactly where your finger is ═ */
+const CH={
+  lvlC:{name:'ATMOS LEVEL',color:'#b48aff'},
+  lvlA:{name:'RIOT LEVEL',color:'var(--riot)'},
+  lvlB:{name:'CULT LEVEL',color:'var(--cult)'},
+  lvlD:{name:'MΛRROW LEVEL',color:'#ffd08a'},
+  duckLaw:{name:'SIDECHAIN LAW',color:'var(--sub)',sc:true},
+  glue:{name:'GLUE',color:'#ffb03d'},
+  master:{name:'MASTER',color:'#e8eef3',gr:true},
+};
+const pct=v=>Math.round(v*100)+'%';
+const bub=$('thumbBub');
+let openKey=null;
+function renderExpand(){
+  const ex=$('expand');
+  document.querySelectorAll('.led').forEach(b=>
+    b.classList.toggle('open', b.dataset.key===openKey));
+  if(!openKey){ ex.classList.remove('open'); ex.innerHTML=''; return; }
+  const c=CH[openKey];
+  ex.classList.add('open');
+  const hzFmt=v=>Math.round(20*Math.pow(20,v))+' Hz';
+  function buildRail(key,label,note,fmt){
+    const F=fmt||pct;
+    const w=document.createElement('div'); w.style.marginBottom='7px';
+    w.innerHTML='<div class="xlbl"><span>'+label
+      +' <i style="color:var(--dim);font-style:normal;font-size:8px">'+note+'</i></span>'
+      +'<span class="v"></span></div>'
+      +'<div class="rail"><div class="fill" style="background:'+c.color+'"></div>'
+      +(key==='master'?'<div class="gr"></div>':'')+'</div>';
+    const rail=w.querySelector('.rail'), fill=w.querySelector('.fill'), vv=w.querySelector('.v');
+    const render=()=>{ fill.style.width=(st[key]*100)+'%'; vv.textContent=F(st[key]); };
+    const drag=e=>{
+      const r=rail.getBoundingClientRect();
+      const x=e.touches?e.touches[0].clientX:e.clientX;
+      const nn=Math.min(1,Math.max(0,(x-r.left)/r.width));
+      setP(key,nn); render();
+      bub.style.display='block';
+      bub.style.left=x+'px'; bub.style.top=r.top+'px';
+      bub.textContent=F(nn);
+    };
+    rail.addEventListener('pointerdown',e=>{ rail.setPointerCapture(e.pointerId); drag(e);
+      const mv=ev=>drag(ev),
+            up=()=>{ bub.style.display='none';
+              rail.removeEventListener('pointermove',mv); rail.removeEventListener('pointerup',up); };
+      rail.addEventListener('pointermove',mv); rail.addEventListener('pointerup',up); });
+    render();
+    ex.appendChild(w);
+  }
+  ex.innerHTML='';
+  if(c.sc){
+    /* THE LAW PANEL — drums are the pump source; depths per tenant,
+       recovery speeds fixed by doctrine (MRRW fast, RIOT med, ATMOS slow) */
+    buildRail('duckA','CULT ⤓ RIOT','melody-adjacent · med recovery');
+    buildRail('duckC','CULT ⤓ ATMOS','throne ducks hardest · slow recovery · BΞDROCK stands');
+    buildRail('duckD','CULT ⤓ MΛRROW','the sacred pair · fast recovery');
+    buildRail('yieldC','ABYSS YIELD','MΛRROW evicts THRONΞ lows');
+    buildRail('yieldB','⊻ SUB OCCUPANCY','the floor steps aside for a NOTE (808s, bass), never for a HIT');
+  } else if(openKey==='glue'){
+    buildRail('glue', c.name, 'parallel 3:1 · instant attack');
+    buildRail('glueHp','⟂ DETECTOR HPF','what GLUE LISTENS to · lift it and the floor stops paying for the drums',hzFmt);
+  } else {
+    buildRail(openKey, c.name, '');
+  }
+}
+document.querySelectorAll('.led').forEach(b=>
+  b.addEventListener('click',()=>{
+    openKey = openKey===b.dataset.key ? null : b.dataset.key;
+    renderExpand();
+  }));
+
+async function ensureMixer(){
+  if(mctx) return;
+  mctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'playback'});
+  const blob=new Blob([MIXER_WORKLET],{type:'application/javascript'});
+  await mctx.audioWorklet.addModule(URL.createObjectURL(blob));
+  mix=new AudioWorkletNode(mctx,'substrate-mix',
+    {numberOfInputs:4, outputChannelCount:[2]});
+    /* was 2 — ATMOS on input 2 would THROW. Four horsemen: RIOT 0 ·
+       CULT 1 · ATMOS 2 · MΛRROW 3 */
+  mix.connect(mctx.destination);
+  for(const k of ['lvlA','lvlB','lvlC','lvlD','duckA','duckC','duckD','yieldC','yieldB','glue','glueHp','master'])
+    mix.parameters.get(k).value=st[k];
+  let wavParts=null, wavPartsR=null, wavGot=0;
+  mix.port.onmessage=e=>{
+   try{
+    if(e.data[0]==='gr'){                        /* glue GR: amber bar inside the
+                                                    MASTER expansion when open */
+      const g=document.querySelector('#expand .gr');
+      if(g && openKey==='master')
+        g.style.width=(Math.min(1,Math.max(0,1-e.data[1]))*60)+'%';
+    }
+    if(e.data[0]==='lv'){                        /* bus dB, pre-limiter */
+      const db=e.data[1], m=$('meter');
+      m.textContent=(db<=-90?'−∞':(db>0?'+':'−')+Math.abs(db).toFixed(1))+' dB';
+      m.className = db>-1 ? 'r' : db>-6 ? 'a' : 'g';
+    }
+    if(e.data[0]==='claw'){                      /* SC law → M01 for internal
+        application: duck gains THRONE broadband; yield arrives as remaining-
+        lows gain (1−yv) for THRONE FLOOR/ABYSS. BEDROCK exempt by design. */
+      const dm=['duck', e.data[1]], ym=['yield', 1-e.data[2]], bm=['bed', e.data[3]];
+      const n=wlNodes['atmos'];
+      if(n){
+        n.port.postMessage(bm);
+        /* WE OWN THE NODE NOW. Before the one-context refactor this had to go
+           DOWN to the iframe so the module could hand it to its own worklet.
+           Post-refactor that route becomes absurd: down to the iframe, whose
+           port proxy immediately posts it back UP to us, so we can give it to
+           the node we were holding the whole time. Two wasted hops at 94Hz —
+           ~188 pointless main-thread messages a second, on a phone that is
+           already out of headroom. Go straight to the node. */
+        n.port.postMessage(dm); n.port.postMessage(ym);
+      } else {
+        /* not hosted — M01 fell back to its own context, or is a legacy build.
+           The iframe route still works and is still correct for that case. */
+        try{ atmo.contentWindow.postMessage({src:'srcd-duo',cmd:'law',
+          duck:e.data[1], yld:1-e.data[2], bed:e.data[3]},'*'); }catch(_){}
+      }
+    }
+    if(e.data[0]==='recack'){
+      if(e.data[1]===1) hintFlash('⏺ RECORDING — bus armed (worklet confirmed)');
+      if(e.data[1]===0){ wavParts=[]; wavPartsR=[]; wavGot=0;
+        hintFlash('⏳ packaging '+e.data[2]+' blocks…'); }
+      if(e.data[1]===-1) hintFlash('⚠ stop received but nothing was armed');
+    }
+    if(e.data[0]==='wavpart' && wavParts){
+      wavParts[e.data[1]]=e.data[3]; wavPartsR[e.data[1]]=e.data[4]; wavGot++;
+      if((wavGot&7)===0) hintFlash('⏳ receiving '+wavGot+'/'+e.data[2]+'…');
+    }
+    if(e.data[0]==='wavend' && wavParts){
+      loopArmed=false; renderCap();
+      const n=wavParts.reduce((q,b)=>q+(b?b.length:0),0);
+      const L=new Float32Array(n), R=new Float32Array(n);
+      let o=0;
+      for(let i=0;i<wavParts.length;i++){ if(!wavParts[i]) continue;
+        L.set(wavParts[i],o); R.set(wavPartsR[i],o); o+=wavParts[i].length; }
+      wavParts=wavPartsR=null;
+      finishCapture(L,R);
+    }
+    if(e.data[0]==='loopack'){ wavParts=[]; wavPartsR=[]; wavGot=0; }
+    if(e.data[0]==='loopedge'){
+      if(loopMeta && loopMeta.tail>0) broadcastTransport(0);   /* ring out */
+      hintFlash(loopMeta&&loopMeta.tail>0 ? '⏱ loop done — recording the ring-out…'
+                                          : '⏱ loop done — seamless cut');
+    }
+    if(e.data[0]==='recerr') hintFlash('✕ capture failed in worklet: '+e.data[1]);
+    if(e.data[0]==='recfull'){ capArmed=false; renderCap();
+      hintFlash('⏺ capture hit its 2-minute ceiling ('
+        +Math.round(e.data[1]||120)+'s) — writing the file now'); }
+   }catch(err){ hintFlash('✕ capture UI error: '+(err&&err.message||err)); }
+  };
+}
+const hooked={riot:null,cult:null,atmos:null,bass:null}; /* live sources */
+
+/* ═══════════ HOSTED WORKLETS — ONE CONTEXT FOR THE WHOLE CHASSIS ═══════════
+   Each module used to mint its OWN AudioContext and push audio at us down a
+   MediaStreamDestination → MediaStreamSource bridge. Five contexts, five output
+   streams, four bridges spanning four INDEPENDENT CLOCK DOMAINS. That bridge is
+   the glitchiest path in Web Audio, and on a phone it underran the instant a
+   second module woke — which is exactly what the crackle was: the export was
+   always clean, because the mixer COMPUTED the right samples. Only delivery failed.
+   Now the module ships us its worklet source, we load it into OUR context, we own
+   the node, and its UI drives that node down a postMessage pipe.
+   One context. One clock. No bridges. The legacy MediaStream path below still
+   works, so an un-updated module degrades instead of going silent. */
+const wlNodes={}, wlAnal={}, wlGain={}, wlReg=new Set();
+const CHIDX={riot:0, cult:1, atmos:2, bass:3};
+let _mixP=null;
+function mixerOnce(){ if(!_mixP) _mixP=ensureMixer(); return _mixP; }
+/* ensureMixer assigns mctx BEFORE it awaits addModule — so two modules booting
+   together could both sail past its `if(mctx) return` with `mix` still undefined.
+   One promise, shared. */
+
+async function wlMount(win, d){
+  try{
+    await mixerOnce();
+    if(mctx.state==='suspended') await mctx.resume();
+    if(!wlReg.has(d.processor)){
+      let viaUrl=false;
+      if(d.url){ try{ await mctx.audioWorklet.addModule(d.url); viaUrl=true; }catch(_){} }
+      if(!viaUrl){
+        if(!d.source) throw new Error('no worklet source');
+        await mctx.audioWorklet.addModule(
+          URL.createObjectURL(new Blob([d.source],{type:'application/javascript'})));
+      }
+      wlReg.add(d.processor);   /* addModule TWICE with the same processor name
+        throws — a power-cycle must re-create the node, never re-register */
+    }
+    if(wlNodes[d.mod]){ try{ wlNodes[d.mod].disconnect(); }catch(_){} }
+    if(hooked[d.mod]){ try{ hooked[d.mod].disconnect(); }catch(_){} }
+    const n=new AudioWorkletNode(mctx, d.processor,
+      {outputChannelCount:[2], processorOptions:d.opts||{}});
+    const an=mctx.createAnalyser(); an.fftSize=1024;
+    n.connect(an);                       /* scope tap — dead end, not a path */
+    const gn=mctx.createGain();          /* the seam a stream fades in under */
+    n.connect(gn); gn.connect(mix, 0, CHIDX[d.mod]);
+    wlGain[d.mod]=gn;
+    n.port.onmessage=ev=>{ try{ win.postMessage({src:'srcd-duo',cmd:'wl-msg',
+      mod:d.mod, m:ev.data},'*'); }catch(_){} };
+    wlNodes[d.mod]=n; wlAnal[d.mod]=an; hooked[d.mod]=n;
+    if(running) reconcile();             /* it woke mid-session: stream it at once
+      unless it happens to be the face on show */
+    if(d.mod==='atmos') mix.port.postMessage(['extc', d.lawcap?1:0]);
+    win.postMessage({src:'srcd-duo',cmd:'wl-ready',mod:d.mod,sr:mctx.sampleRate},'*');
+    /* it mounted after the last face switch, so it never heard whether anyone is
+       looking at it. Tell it now, or it draws its scope for nobody, forever. */
+    try{ win.postMessage({src:'srcd-duo',cmd:'face',
+      on:(FACES[face] && FACES[face].mod===d.mod)?1:0},'*'); }catch(_){}
+    $('hint').textContent='⛁ '+String(d.mod).toUpperCase()+' HOSTED IN THE SUBSTRΛTΞ CONTEXT';
+    $('hint').style.opacity=1;
+    setTimeout(()=>$('hint').style.opacity=0,2200);
+  }catch(err){
+    const msg=String(err&&err.message||err);
+    try{ win.postMessage({src:'srcd-duo',cmd:'wl-fail',mod:d.mod,err:msg},'*'); }catch(_){}
+    $('hint').textContent='⚠ '+String(d.mod).toUpperCase()+' worklet mount failed: '+msg;
+    $('hint').style.opacity=1;
+  }
+}
+/* SCOPE RELAY — the chassis owns the analysers now, so it ships frames down to
+   whichever face is actually on show. One canvas, 30fps, 1KB a frame. */
+let _scT=0;
+function scopeRelay(t){
+  if(t-_scT>=33){
+    _scT=t;
+    const F=FACES[face], an=F && F.mod ? wlAnal[F.mod] : null;
+    if(an && F.el.contentWindow){
+      const b=new Uint8Array(an.fftSize);
+      an.getByteTimeDomainData(b);
+      try{ F.el.contentWindow.postMessage({src:'srcd-duo',cmd:'scope',
+        mod:F.mod, data:b},'*',[b.buffer]); }catch(_){}
+    }
+  }
+  requestAnimationFrame(scopeRelay);
+}
+requestAnimationFrame(scopeRelay);
+window.addEventListener('message',async e=>{
+  const d=e.data;
+  if(!d || d.src!=='srcd-duo') return;
+  if(d.cmd==='switch') show(face+(d.dir||1));
+  if(d.cmd==='wl-mount'){
+    const F={riot,cult,atmos:atmo,bass}[d.mod];
+    if(F) wlMount(F.contentWindow, d);
+    return;
+  }
+  if(d.cmd==='wl-send'){
+    const n=wlNodes[d.mod];
+    if(!n) return;
+    /* ═ A STREAM HAS NO ENGINE TO TALK TO ═
+       This is where it all went wrong. broadcastTransport makes EVERY face click
+       its own play button, and every face posts that play straight back up here.
+       A module that is supposed to be a silent, parked stream would wake up and
+       play live OVER THE TOP OF ITS OWN BUFFER — and the old code, on seeing an
+       incoming message for a streaming module, deleted the stream handle BEFORE
+       trying to stop it. The buffer source was orphaned: still playing, still
+       connected, and no longer reachable by anything, including stopStreams().
+       That is the collision, and that is MΛRROW playing forever after STOP.
+       A streaming module's node is parked and its sound is a photograph. Nothing
+       goes to it. Nothing needs to. */
+    if(running && streams[d.mod]) return;
+    /* and during the launch window the chassis is scheduling the transport to
+       the FRAME — a module's own play button must not race it */
+    if(chassisDriving && Array.isArray(d.m) &&
+       (d.m[0]==='play' || d.m[0]==='playat' ||
+        (d.m[0]==='seq' && d.m[1] && d.m[1].on!==undefined))) return;
+    n.port.postMessage(d.m);
+    return;
+  }
+  if(d.cmd==='wl-kill'){
+    const n=wlNodes[d.mod];
+    if(n){ try{ n.disconnect(); }catch(_){} }
+    wlNodes[d.mod]=null; wlAnal[d.mod]=null; hooked[d.mod]=null;
+    return;
+  }
+  if(d.cmd==='tap-failed'){
+    $('hint').textContent='⚠ '+d.mod.toUpperCase()+' bus tap failed ('+d.err+') — module playing DIRECT, console mixer bypassed for it';
+    $('hint').style.opacity=1;
+  }
+  if(d.cmd==='audio-ready'){
+    try{
+      await mixerOnce();
+      if(mctx.state==='suspended') await mctx.resume();
+      const frame = {riot,cult,atmos:atmo,bass}[d.mod]; if(!frame) return;
+      /* a power-cycle mints a NEW context + NEW stream and re-announces —
+         the chassis must drop the orphaned source and re-patch, or the
+         module plays forever into a dead pipe (the post-power-cycle
+         silence bug) */
+      if(hooked[d.mod]){ try{ hooked[d.mod].disconnect(); }catch(_){} hooked[d.mod]=null; }
+      const stream=frame.contentWindow.__srcdModuleOut;
+      if(!stream) return;
+      const srcN=mctx.createMediaStreamSource(stream);
+      srcN.connect(mix, 0, {riot:0,cult:1,atmos:2,bass:3}[d.mod]);
+      hooked[d.mod]=srcN;
+      if(d.mod==='atmos') mix.port.postMessage(['extc', d.lawcap?1:0]);
+      /* stale-file safety: an old M01 without lawcap keeps the legacy
+         whole-channel duck — the law must never silently vanish */
+      $('hint').textContent='⛁ '+d.mod.toUpperCase()+' PATCHED INTO THE SUBSTRΛTΞ BUS';
+      $('hint').style.opacity=1;
+      setTimeout(()=>$('hint').style.opacity=0,2500);
+    }catch(err){
+      $('hint').textContent='✕ bus patch failed: '+(err.message||err);
+      $('hint').style.opacity=1;
+    }
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft') show(face-1);
+  if(e.key==='ArrowRight') show(face+1);
+});
+/* master transport — two MOMENTARY commands, zero chassis state, zero
+   module feedback. ▶ALL starts every powered face that's stopped; ■ALL
+   stops every powered face that's running. Module buttons stay purely
+   local; separate tempos per face are a feature, not a bug. */
+function broadcastTransport(on){
+  if(!on){
+    running=false; chassisDriving=false;
+    stopStreams();
+    /* Defensive re-patch of the CROSSFADE GAIN, not the raw node. Connecting
+       wlNodes[m] straight to the mixer here built a SECOND path around
+       wlGain — after the first STOP every live module was doubled (+6 dB)
+       and parking could never fully mute an engine again. connect() of an
+       existing edge is a no-op, so this repairs an accidental disconnect
+       without ever duplicating. */
+    for(const m of Object.keys(wlGain)) if(wlGain[m] && wlNodes[m])
+      { try{ wlGain[m].connect(mix,0,CHIDX[m]); }catch(_){} }
+    return broadcastTransport_(0);
+  }
+  if(!mctx || !mix){ broadcastTransport_(1); return null; }
+  return startEverything();
+}
+/* ═ WHY THE FIRST PLAY WAS CHOPPY AND THE REST WERE NOT ═
+   Rendering a stream means building an OfflineAudioContext and calling
+   addModule on it — which COMPILES the worklet source, on the main thread, from
+   scratch, because module registration is per-context and there is no sharing it.
+   Three of those at once is a main-thread stall measured in hundreds of
+   milliseconds, and doing it AFTER the transport has rolled means the audio
+   thread is starved while it happens. That is the choppy first bar. It came good
+   on the second play because the browser had cached the compile.
+   So: do the expensive thing IN SILENCE. Render every stream first, with nothing
+   playing and nothing to starve. Only when they are all in memory do we pick an
+   edge and launch — engines and streams together, on the same frame. */
+async function startEverything(){
+  if(running) return null;
+  running=true;
+  const face_=FACES[face] && FACES[face].mod;
+  const mods=Object.keys(wlNodes).filter(m=>wlNodes[m]);
+  const bufs={};
+  const need=mods.filter(m=>m!==face_);
+  if(need.length){
+    $('hint').textContent='⏳ preparing…'; $('hint').style.opacity=1;
+    for(const m of need){
+      try{ bufs[m]=await renderStream(m); }catch(_){ bufs[m]=null; }
+    }
+    $('hint').style.opacity=0;
+  }
+  if(!running) return null;            /* they hit stop while we were working */
+  const rate=mctx.sampleRate;
+  const frame=Math.ceil((mctx.currentTime+0.18)*rate/128)*128;
+  const edge={t:frame/rate, frame};
+  loopAnchor=edge.t;
+  chassisDriving=true;                 /* from here the chassis owns the transport */
+  /* ORDER MATTERS AND IT IS THE WHOLE BUG.
+     Register and PARK every stream FIRST. Only then broadcast. By the time each
+     face clicks its own play button and posts it back up, streams[] is already
+     populated — so wl-send drops it, and a parked engine stays parked instead of
+     waking up to play over its own buffer. */
+  for(const m of mods){
+    if(m!==face_ && bufs[m]) startStream(m, bufs[m], edge, true);
+  }
+  broadcastTransport_(1);              /* the faces light their own PLAY lamps */
+  /* and the live one is scheduled to the FRAME, not to whenever a postMessage
+     happens to land */
+  for(const m of mods){
+    const n=wlNodes[m];
+    if(!n) continue;
+    if(m===face_ || !bufs[m]){
+      n.port.postMessage(['play',0]);
+      n.port.postMessage(['playat', edge.frame]);
+    }
+  }
+  setTimeout(()=>{ chassisDriving=false; },
+    Math.max(300,(edge.t+0.1-mctx.currentTime)*1000));
+  return edge;                         /* loop-grab arms its counter against this */
+}
+function broadcastTransport_(on){
+  const msg={src:'srcd-duo',cmd:'transport',on:on?1:0};
+  for(const F of FACES) if(F.loaded){
+    try{ F.el.contentWindow.postMessage(msg,'*'); }catch(_){}
+  }
+}
+$('runAll').addEventListener('click',()=>broadcastTransport(1));
+$('stopAll').addEventListener('click',()=>broadcastTransport(0));
+
+/* ═ ⏺ CAPTURE — record the mixer's true output: levels, sidechain, glue,
+   master, tanh — the session exactly as the chassis plays it. Live capture
+   because the modules stream in real time; there is no offline re-render
+   of a two-engine performance. 32f stereo WAV, timestamped. ═ */
+let capArmed=false;
+function hintFlash(t){ $('hint').textContent=t; $('hint').style.opacity=1;
+  setTimeout(()=>$('hint').style.opacity=0,3500); }
+function renderCap(){
+  /* class only — writing textContent here once DESTROYED the SVG child
+     and left a plain-text corpse. The armed glyph (save-arrow) is pure CSS. */
+  $('capBtn').classList.toggle('rec',capArmed||loopArmed);
+}
+let loopArmed=false;
+$('capBtn').addEventListener('click',()=>{
+  if(!mix){ hintFlash('⏻ power a module first — the bus wakes with the first face'); return; }
+  if(capArmed){                                   /* free-rec running: stop it */
+    capArmed=false;
+    mix.port.postMessage(['rec',0]); renderCap();
+    hintFlash('⏳ packaging capture…'); return;
+  }
+  if(loopArmed){                                  /* loop grab running: cancel */
+    loopArmed=false; mix.port.postMessage(['recloopcancel']); renderCap();
+    hintFlash('✕ loop grab cancelled'); return;
+  }
+  $('capCfg').classList.toggle('show');           /* idle: open the ritual menu */
+});
+$('cFree').addEventListener('click',()=>{
+  $('capCfg').classList.remove('show');
+  capArmed=true;
+  mix.port.postMessage(['rec',1]); renderCap();
+  hintFlash('⏺ RECORDING THE SUBSTRΛTΞ BUS — raw, exactly as it plays');
+});
+/* ═ ⏱ LOOP GRAB — the stem-generator ritual:
+   ■ ALL → let tails die → ▶ ALL + arm the counter in one breath →
+   worklet skips one full warm loop (FX built, sequencers locked to step 0)
+   → records EXACTLY bars → cut = seamless loop, or transport stops at the
+   edge and the ring-out becomes the tail. DAW-ready, no scissors. ═ */
+let loopMeta=null;
+$('cBpm').value=st.capBpm;
+$('cGo').addEventListener('click',()=>{
+  $('capCfg').classList.remove('show');
+  const bpm=Math.min(220,Math.max(40,+$('cBpm').value||120));
+  const bars=+$('cBars').value, tailS=$('cTail').value==='cut'?0:+$('cTail').value;
+  st.capBpm=bpm; save();
+  const sr=mctx.sampleRate;
+  const loopN=Math.round(bars*4*(60/bpm)*sr);
+  /* CUT MODE POPS, and warming harder will never fix it. One warm pass walks
+     the SEQUENCERS back to step 0 — it does not walk the REVERB TAILS back to
+     where they were, because they are still building. So the audio at the cut
+     is never quite the audio at the start, and the splice steps. Instead:
+     record a short OVERHANG past the loop point. That overhang IS the true
+     continuation of the last sample. Fold it back over the head and the wrap
+     is continuous BY CONSTRUCTION — whatever the FX happen to be doing. */
+  const xfN = tailS ? 0 : Math.min(Math.round(0.016*sr), (loopN/4)|0);
+  loopMeta={bpm,bars,tail:tailS,mainN:loopN,xfN};
+  broadcastTransport(0);
+  hintFlash('⏱ arming — letting tails die…');
+  (async()=>{
+    await new Promise(r=>setTimeout(r,600));
+    /* LAUNCH FIRST, IN SILENCE — THEN ARM AGAINST THE REAL EDGE.
+       recloop used to be sent BEFORE broadcastTransport(1). But launching
+       renders every stream offline first, which takes hundreds of ms to
+       seconds — while the worklet's warm-loop counter was already running.
+       Every capture came back rotated by however long the renders took, and
+       a short loop could open its capture window before anything played at
+       all. Arm with the measured lead to the scheduled edge instead: the
+       warm loop is a true musical loop and capture begins exactly at bar 1
+       of pass 2. (The lead measurement is ±one render quantum; the warm
+       loop absorbs that by design.) */
+    const edge=await broadcastTransport(1);
+    if(!mix){ hintFlash('✕ loop grab failed — no bus'); return; }
+    loopArmed=true; renderCap();
+    const lead = edge ? Math.max(0, Math.round((edge.t - mctx.currentTime)*sr)) : 0;
+    /* the overhang rides in on the TAIL slot — and because loopMeta.tail is 0,
+       the loopedge handler leaves the transport RUNNING through it, which is
+       exactly what makes it a true continuation and not a ring-out */
+    mix.port.postMessage(['recloop', lead+loopN, loopN,
+      tailS ? Math.round(tailS*sr) : xfN]);
+    hintFlash('⏱ warm loop rolling — capture begins at bar 1 of pass 2');
+  })();
+});
+/* ═══════════════ STREAMS — RENDER, THEN PLAY THE RENDER ═══════════════
+   The live engines do not fit. Measured: four modules + the mixer come to 16.8%
+   of a render quantum on a desktop, which on the phone this is built for lands
+   at ~100% — over the deadline, which IS the crackle. And there is no hotspot to
+   cut: 85% of VΛPOR's cost is its oscillator loop, and RIOT's is the same story.
+   You cannot optimise your way out of a budget.
+   But NOTHING says playback has to be synthesis. OfflineAudioContext has NO
+   real-time deadline — it renders faster than the clock and physically cannot
+   glitch. So: bounce the whole console through its own mixer, offline, once.
+   Then PLAY THE BOUNCE. An AudioBufferSourceNode costs essentially nothing.
+   The live engines get parked at idle and the crackle has nothing left to
+   crackle with. Program live (which fits), LOCK, move on. */
+function askState(mod){
+  return new Promise(res=>{
+    const F={riot,cult,atmos:atmo,bass}[mod];
+    if(!F || !F.contentWindow) return res(null);
+    const to=setTimeout(()=>{ window.removeEventListener('message',h); res(null); },5000);
+    function h(e){ const d=e.data;
+      if(!d || d.src!=='srcd-duo' || d.cmd!=='wl-state' || d.mod!==mod) return;
+      clearTimeout(to); window.removeEventListener('message',h);
+      res(d.ok ? d : null);
+    }
+    window.addEventListener('message',h);
+    F.contentWindow.postMessage({src:'srcd-duo',cmd:'wl-state-req',mod},'*');
+  });
+}
+/* ═══════════ STREAMS — the part nobody is supposed to notice ═══════════
+   There is no button for this and there never should be. The rule is simply:
+
+       THE FACE YOU ARE LOOKING AT IS LIVE. EVERY OTHER MODULE IS A STREAM.
+
+   A stream is that module's own output, rendered offline once and played back
+   from a buffer. Same synth, same law, same notes — but an AudioBufferSourceNode
+   is native code doing a memcpy, where the live worklet is an oscillator bank.
+   One live module + three streams costs about a quarter of what four live
+   engines cost, and the difference is the difference between a phone that plays
+   and a phone that crackles.
+
+   Nobody is told any of this. You switch faces; the console keeps playing. The
+   handoff happens on the loop boundary, frame-exact on both sides, under a 24ms
+   crossfade between two signals that are BIT-IDENTICAL to each other (proven —
+   the offline render of a module is its live output, sample for sample). You
+   cannot hear a crossfade between a thing and itself. */
+const streams={};                      /* mod -> {src,gain} currently streaming */
+const blobURLs={};                     /* addModule COMPILES the worklet source on
+  the main thread. A fresh blob URL each time defeats the browser's compile cache
+  and you pay for it again — which is exactly why the first play stalled and the
+  second did not. Mint the URL once per module and every later render is a cache
+  hit. */
+function moduleURL(mod, source){
+  if(!blobURLs[mod]) blobURLs[mod]=URL.createObjectURL(
+    new Blob([source],{type:'application/javascript'}));
+  return blobURLs[mod];
+}
+const allSrcs=new Set();               /* EVERY buffer source ever started. Belt
+  and braces: if one is ever orphaned again, STOP still finds it and kills it. */
+let chassisDriving=false;              /* true across the launch window */
+let loopAnchor=0;                      /* mctx time of the last loop downbeat */
+let running=false, swapping=false;
+
+function loopGeom(){
+  const rate=mctx.sampleRate;
+  const bpm=Math.min(220,Math.max(40,+$('cBpm').value||st.capBpm||120));
+  const bars=+$('cBars').value||4;
+  const mainS=bars*4*(60/bpm);
+  return {rate, bpm, bars, mainS,
+    mainN:Math.round(mainS*rate),
+    warmS:mainS,                       /* a FULL loop of warm-up: the tails must
+      arrive already breathing, or the stream starts drier than the live engine
+      it is standing in for and the swap is audible */
+    xfN:Math.min(Math.round(0.016*rate), Math.round(mainS*rate/4))};
+}
+async function renderStream(mod){
+  const g=loopGeom();
+  const p=await askState(mod);
+  if(!p) return null;
+  const secs=g.warmS+g.mainS+g.xfN/g.rate+0.05;
+  const oc=new OfflineAudioContext(2, Math.ceil(secs*g.rate), g.rate);
+  let viaUrl=false;
+  if(p.url){ try{ await oc.audioWorklet.addModule(p.url); viaUrl=true; }catch(_){} }
+  if(!viaUrl){
+    if(!p.source) return null;
+    await oc.audioWorklet.addModule(moduleURL(mod, p.source));
+  }
+  const n=new AudioWorkletNode(oc,p.processor,
+    {outputChannelCount:[2], processorOptions:p.opts||{}});
+  n.connect(oc.destination);
+  const buf=await oc.startRendering();
+  const cut=Math.round(g.warmS*g.rate);
+  const L=new Float32Array(buf.getChannelData(0).subarray(cut, cut+g.mainN+g.xfN));
+  const R=new Float32Array(buf.getChannelData(1).subarray(cut, cut+g.mainN+g.xfN));
+  const [FL,FR]=foldWrap(L,R,g.mainN,g.xfN);   /* same seam law as every capture */
+  const ab=mctx.createBuffer(2,g.mainN,g.rate);
+  ab.copyToChannel(FL,0); ab.copyToChannel(FR,1);
+  return ab;
+}
+/* the next loop downbeat, snapped to the BLOCK GRID so the buffer (sample-exact)
+   and the worklet (block-exact) can land on the very same frame */
+function nextEdge(){
+  const g=loopGeom(), rate=g.rate;
+  const now=mctx.currentTime;
+  let t = loopAnchor + Math.ceil(Math.max(0,(now+0.12)-loopAnchor)/g.mainS)*g.mainS;
+  const frame=Math.ceil(t*rate/128)*128;
+  return {t:frame/rate, frame};
+}
+function startStream(mod, ab, edge, now){
+  if(streams[mod] || !wlNodes[mod]) return;
+  const gn=mctx.createGain(), sr=mctx.createBufferSource();
+  sr.buffer=ab; sr.loop=true;
+  sr.connect(gn); gn.connect(mix,0,CHIDX[mod]);
+  /* the scope taps the LIVE node only, so a parked face drew a FLAT LINE
+     while its stream played perfectly well — that read as "the module failed
+     to follow the broadcast" when it was following it exactly. Tap the
+     stream into the same analyser: the scope now shows whatever is actually
+     sounding, photograph or engine (the live node is silent while parked,
+     the stream gain is 0 while live — they never double). */
+  try{ if(wlAnal[mod]) gn.connect(wlAnal[mod]); }catch(_){}
+  gn.gain.setValueAtTime(0, edge.t);
+  gn.gain.linearRampToValueAtTime(1, edge.t+0.024);
+  sr.start(edge.t);
+  allSrcs.add(sr);
+  streams[mod]={src:sr, gain:gn};
+  const wg=wlGain[mod];
+  if(wg){ wg.gain.setValueAtTime(now?0:1, edge.t);
+          if(!now) wg.gain.linearRampToValueAtTime(0, edge.t+0.024); }
+  if(now){
+    /* AT LAUNCH nothing is playing yet, so there is nothing to fade out of —
+       park the engine at once. That also closes the door before the transport
+       broadcast can knock: streams[] is already set, so wl-send drops its play
+       and a parked engine STAYS parked instead of waking to play over its own
+       buffer. That was the collision. */
+    try{ wlNodes[mod].port.postMessage(['play',0]); }catch(_){}
+  } else {
+    /* MID-SESSION (a face switch) the engine IS playing, so park it only AFTER
+       the crossfade — by then its gain is 0 and the main thread can be as late
+       as it likes without anyone hearing it. */
+    const delay=Math.max(0,(edge.t+0.06-mctx.currentTime))*1000;
+    setTimeout(()=>{ try{ wlNodes[mod].port.postMessage(['play',0]); }catch(_){} }, delay);
+  }
+}
+async function toLive(mod, edge){
+  const s2=streams[mod];
+  const n=wlNodes[mod], wg=wlGain[mod];
+  if(!n || !wg) return;
+  n.port.postMessage(['playat', edge.frame]);     /* frame-exact. No slip. */
+  wg.gain.setValueAtTime(0, edge.t);
+  wg.gain.linearRampToValueAtTime(1, edge.t+0.024);
+  if(s2){
+    s2.gain.gain.setValueAtTime(1, edge.t);
+    s2.gain.gain.linearRampToValueAtTime(0, edge.t+0.024);
+    const when=edge.t+0.05;
+    try{ s2.src.stop(when); }catch(_){}
+    const delay=Math.max(0,(when-mctx.currentTime))*1000+40;
+    setTimeout(()=>{ try{ s2.src.disconnect(); s2.gain.disconnect(); }catch(_){} }, delay);
+    streams[mod]=null; delete streams[mod];
+  }
+}
+/* the whole policy, in one function */
+async function reconcile(){
+  if(!running || !mix || swapping) return;
+  swapping=true;
+  try{
+    /* LOOP UNTIL THE FACE IS STABLE. reconcile captured the face at entry and
+       the `swapping` guard dropped every switch that landed during its awaits
+       — so cycling A→B→C→D left the face you STOPPED ON parked as a stream
+       (audible, but frozen scope, engine never thawed). Re-run for the new
+       face until a pass completes with the face unchanged. */
+    for(let pass=0; pass<6; pass++){
+      const face_=FACES[face] && FACES[face].mod;
+      const mods=Object.keys(wlNodes).filter(m=>wlNodes[m]);
+      /* RENDER FIRST, THEN PICK THE EDGE. The old order chose an edge, then
+         spent a few hundred milliseconds rendering — by which time the edge it
+         had promised to start on was already in the past, and start() fired
+         instantly. Phase alignment gone. */
+      const bufs={};
+      for(const m of mods)
+        if(m!==face_ && !streams[m]){
+          try{ bufs[m]=await renderStream(m); }catch(_){ bufs[m]=null; }
+        }
+      if(!running) break;
+      const edge=nextEdge();
+      for(const m of mods){
+        if(m===face_){ if(streams[m]) toLive(m, edge); }
+        else if(!streams[m] && bufs[m]) startStream(m, bufs[m], edge, false);
+      }
+      if(!FACES[face] || FACES[face].mod===face_) break;   /* stable: done */
+    }
+  }catch(err){ hintFlash('⚠ stream: '+(err&&err.message||err)); }
+  swapping=false;
+}
+function stopStreams(){
+  /* NOT an instant kill. src.stop() mid-waveform is a hard chop — and in a
+     ring-out capture the tail slot recorded exactly that: the live face rang
+     out while every STREAM was cut dead on the loop edge (audibly, and it
+     read as "those modules weren't there"). An 80ms fade is short enough to
+     stay a stop and long enough not to be a cliff. Sources are still
+     guaranteed dead: stop() is scheduled, disconnect follows after. */
+  const t0 = mctx ? mctx.currentTime : 0;
+  const dying=[];
+  for(const m of Object.keys(streams)){
+    const s2=streams[m]; if(!s2) continue;
+    try{ s2.gain.gain.cancelScheduledValues(t0);
+         s2.gain.gain.setValueAtTime(s2.gain.gain.value, t0);
+         s2.gain.gain.linearRampToValueAtTime(0, t0+0.08); }catch(_){}
+    try{ s2.src.stop(t0+0.1); }catch(_){}
+    dying.push(s2);
+    delete streams[m];
+  }
+  const orphans=[...allSrcs]; allSrcs.clear();   /* nothing survives STOP. Nothing. */
+  for(const sc of orphans){ try{ sc.stop(t0+0.1); }catch(_){} }
+  setTimeout(()=>{
+    for(const s2 of dying){ try{ s2.src.disconnect(); s2.gain.disconnect(); }catch(_){} }
+    for(const sc of orphans){ try{ sc.disconnect(); }catch(_){} }
+  }, 250);
+  for(const m of Object.keys(wlNodes)) if(wlNodes[m])
+    { try{ wlNodes[m].port.postMessage(['play',0]); }catch(_){} }
+  for(const m of Object.keys(wlGain)){
+    const g2=wlGain[m]; if(g2){ try{ g2.gain.cancelScheduledValues(0);
+      g2.gain.value=1; }catch(_){} }
+  }
+}
+
+/* ═ wrap-around fold: make sample M−1 flow into sample 0 by construction ═
+   Playback wraps M−1 → 0. After the fold, out[0] IS the recorded sample that
+   followed in[M−1] — so the splice is continuous, not merely smoothed. Over
+   the next X samples we blend from that continuation into the loop's real
+   head, and from X onward the body is untouched.
+   LINEAR, not equal-power: the two passes are the SAME music in phase, so
+   they sum COHERENTLY — a sin/cos fade would put a +3dB bump squarely on the
+   downbeat. Coherent content wants t + (1−t) = 1. */
+function foldWrap(L,R,M,X){
+  for(let i=0;i<X;i++){
+    const t=i/X, u=1-t;
+    L[i]=L[i]*t + L[M+i]*u;
+    R[i]=R[i]*t + R[M+i]*u;
+  }
+  return [L.subarray(0,M), R.subarray(0,M)];
+}
+function wavStereo32f(L,R,rate){
+  const n=L.length, data=new Float32Array(n*2);
+  for(let i=0;i<n;i++){ data[i*2]=L[i]; data[i*2+1]=R[i]; }
+  const bytes=data.length*4, buf=new ArrayBuffer(58+bytes), v=new DataView(buf);
+  const W=(o,s2)=>{for(let i=0;i<s2.length;i++)v.setUint8(o+i,s2.charCodeAt(i));};
+  W(0,'RIFF'); v.setUint32(4,50+bytes,true); W(8,'WAVE');
+  W(12,'fmt '); v.setUint32(16,18,true); v.setUint16(20,3,true); v.setUint16(22,2,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate*8,true); v.setUint16(32,8,true);
+  v.setUint16(34,32,true); v.setUint16(36,0,true);
+  W(38,'fact'); v.setUint32(42,4,true); v.setUint32(46,n,true);
+  W(50,'data'); v.setUint32(54,bytes,true);
+  /* byte copy — a Float32Array VIEW at offset 58 throws (58 % 4 ≠ 0);
+     this exact RangeError was the silent capture killer */
+  new Uint8Array(buf,58).set(new Uint8Array(data.buffer));
+  return new Blob([buf],{type:'audio/wav'});
+}
+function finishCapture(L,R){
+  if(!L || !L.length){ hintFlash('⏺ capture was empty — was anything playing?'); return; }
+  const meta=loopMeta; loopMeta=null;
+  let folded=false;
+  if(meta && meta.xfN>0 && L.length>=meta.mainN+meta.xfN){
+    const out=foldWrap(L,R,meta.mainN,meta.xfN);
+    L=out[0]; R=out[1]; folded=true;
+  }
+  const ts=new Date().toISOString().slice(11,19).replace(/:/g,'');
+  const name=(meta ? 'substrate-loop-'+meta.bpm+'bpm-'+meta.bars+'bar'
+                        +(meta.tail?'-tail'+meta.tail+'s':'-seamless')
+                       : 'substrate-session')+'-'+ts+'.wav';
+  const blob=wavStereo32f(L,R,mctx.sampleRate);
+  const url=URL.createObjectURL(blob);
+  const file=new File([blob],name,{type:'audio/wav'});
+  const canShare=!!(navigator.canShare && navigator.canShare({files:[file]}));
+  const embedded=window.top!==window;
+  /* polite auto-attempt (works when we're the top page and policy allows) */
+  const a=document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  /* the guarantee bar. Tap → Android SHARE SHEET first (system UI — it
+     cannot fail silently; save to Files/Drive from there). Anchor
+     download is the fallback for desktop. An embedding host without
+     allow-downloads blocks anchors with NO error — share sheet is immune. */
+  const chip=$('saveChip');
+  chip.href=url; chip.download=name;
+  chip.textContent=(canShare?'⇪ SAVE / SHARE ':'⇓ SAVE ')+name
+    +' · '+(L.length/mctx.sampleRate).toFixed(1)+'s'
+    +(folded?' · wrap-folded':'')
+    +(embedded?' · ⚠ embedded host — use share':'');
+  chip.classList.add('show');
+  chip.onclick=(e)=>{
+    if(canShare){
+      e.preventDefault();
+      navigator.share({files:[file], title:name})
+        .then(()=>hintFlash('⇪ handed to the system — pick Files/Drive to save'))
+        .catch(err=>{ if(String(err).indexOf('Abort')<0)
+          hintFlash('✕ share failed: '+(err&&err.message||err)); });
+      return;
+    }
+    setTimeout(()=>{ chip.classList.remove('show');
+      URL.revokeObjectURL(url); },800);
+  };
+  hintFlash('⇓ capture ready — tap the red bar'+(canShare?' for the share sheet':''));
+}
+$('xClose').addEventListener('click',()=>{
+  if(window.parent!==window) parent.postMessage({src:'srcd-duo',cmd:'close'},'*');
+  else if(history.length>1) history.back();
+  else $('hint').textContent='STANDALONE MODE — CLOSE THE TAB TO EXIT';
+});
+setTimeout(()=>$('hint').style.opacity=0, 7000);
+</script>
+</body>
+</html>
