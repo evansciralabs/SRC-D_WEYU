@@ -819,7 +819,10 @@ window.addEventListener('message',async e=>{
   const d=e.data;
   if(!d || d.src!=='srcd-duo') return;
   if(d.cmd==='switch') show(face+(d.dir||1));
-  if(d.cmd==='wl-mount'){ /* ... existing wl-mount ... */ }
+  if(d.cmd==='wl-mount'){
+  const F = { riot, cult, atmos: atmo, bass }[d.mod];
+  if(F) wlMount(F.contentWindow, d);
+}
 
   /* --- The Dynamic Cache Event API --- */
   if(d.cmd === 'cache-dirty') {
