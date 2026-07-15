@@ -1264,18 +1264,10 @@ async function reconcile(){
   if(!running || !mix || swapping) return;
   swapping=true;
   try{
-    /* LOOP UNTIL THE FACE IS STABLE. reconcile captured the face at entry and
-       the `swapping` guard dropped every switch that landed during its awaits
-       — so cycling A→B→C→D left the face you STOPPED ON parked as a stream
-       (audible, but frozen scope, engine never thawed). Re-run for the new
-       face until a pass completes with the face unchanged. */
+    /* LOOP UNTIL THE FACE IS STABLE */
     for(let pass=0; pass<6; pass++){
       const face_=FACES[face] && FACES[face].mod;
       const mods=Object.keys(wlNodes).filter(m=>wlNodes[m]);
-      /* RENDER FIRST, THEN PICK THE EDGE. The old order chose an edge, then
-         spent a few hundred milliseconds rendering — by which time the edge it
-         had promised to start on was already in the past, and start() fired
-         instantly. Phase alignment gone. */
       const bufs={};
       for(const m of mods)
         if(m!==face_ && !streams[m]){
@@ -1287,19 +1279,18 @@ async function reconcile(){
         if(m===face_){ if(streams[m]) toLive(m, edge); }
         else if(!streams[m] && bufs[m]) startStream(m, bufs[m], edge, false);
       }
-      if(!FACES[face] || FACES[face].mod===face_) break;   /* stable: done */
+      if(!FACES[face] || FACES[face].mod===face_) break;
     }
-    } catch (err) {
-    // FORCE FULL ERROR REPORTING
+  } catch (err) {
+    // ERROR REPORTING: 'd' removed because it is not available in this scope
     const fullErr = err.stack || err.message || String(err);
-    console.error("SUBSTRΛTΞ // MOUNT FAILED:", d.mod, fullErr);
+    console.error("SUBSTRΛTΞ // RECONCILE FAILED:", fullErr);
     
-    // Show the first 40 chars of the actual error to identify the root cause
-    $('hint').textContent = '⚠ FAILED [' + d.mod + ']: ' + (err.message || String(err)).slice(0,40);
+    $('hint').textContent = '⚠ RECONCILE FAILED: ' + (err.message || String(err)).slice(0,40);
     $('hint').style.opacity = 1;
-    
-    try { win.postMessage({ src: 'srcd-duo', cmd: 'wl-fail', mod: d.mod, err: err.message }, '*'); } catch (_) { }
   }
+  swapping=false;
+}
 
 function stopStreams(){
   /* NOT an instant kill. src.stop() mid-waveform is a hard chop — and in a
