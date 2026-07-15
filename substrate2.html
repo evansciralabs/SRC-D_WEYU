@@ -1264,28 +1264,30 @@ async function reconcile(){
   if(!running || !mix || swapping) return;
   swapping=true;
   try{
-    /* LOOP UNTIL THE FACE IS STABLE */
+    /* LOOP UNTIL THE FACE IS STABLE. */
     for(let pass=0; pass<6; pass++){
       const face_=FACES[face] && FACES[face].mod;
       const mods=Object.keys(wlNodes).filter(m=>wlNodes[m]);
+      /* RENDER FIRST, THEN PICK THE EDGE. */
       const bufs={};
-      for(const m of mods)
+      for(let m of mods)
         if(m!==face_ && !streams[m]){
           try{ bufs[m]=await renderStream(m); }catch(_){ bufs[m]=null; }
         }
       if(!running) break;
       const edge=nextEdge();
-      for(const m of mods){
+      for(let m of mods){
         if(m===face_){ if(streams[m]) toLive(m, edge); }
         else if(!streams[m] && bufs[m]) startStream(m, bufs[m], edge, false);
       }
       if(!FACES[face] || FACES[face].mod===face_) break;
     }
   } catch (err) {
-    // ERROR REPORTING: 'd' removed because it is not available in this scope
+    // RECONCILE ERROR HANDLING: 'd' and 'win' are not defined in this scope.
     const fullErr = err.stack || err.message || String(err);
     console.error("SUBSTRΛTΞ // RECONCILE FAILED:", fullErr);
     
+    // UI feedback only
     $('hint').textContent = '⚠ RECONCILE FAILED: ' + (err.message || String(err)).slice(0,40);
     $('hint').style.opacity = 1;
   }
