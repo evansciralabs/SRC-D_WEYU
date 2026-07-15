@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>MΛRROW</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050505; --panel:#0e0e0d; --edge:#292824; --txt:#eae6db; --dim:#6f6c63;
+  --bone:#f2ead8;   /* bone white on black — the skeleton itself */
+  --acc2:#cfc9b8;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--txt);font-family:'Chakra Petch',monospace;
+  font-size:13px;user-select:none;-webkit-user-select:none;padding-bottom:88px}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--edge);position:sticky;top:0;background:var(--bg);z-index:20}
+header h1{font-size:16px;letter-spacing:.22em;color:var(--bone);font-weight:700}
+header h1 b{color:var(--acc2)}
+.faceArrow{cursor:default}
+body.embedded .faceArrow{cursor:pointer;color:var(--acc2);text-shadow:0 0 10px rgba(255,157,92,.5)}
+body.embedded .faceArrow:active{opacity:.5}
+#scope{flex:1;height:38px;min-width:60px;background:#0b0b0a;border:1px solid var(--edge)}
+#pwr{font-family:inherit;letter-spacing:.12em;background:transparent;
+  color:var(--dim);border:1px solid var(--dim);padding:8px 14px;font-size:12px;cursor:pointer}
+#pwr.on{color:#141412;background:var(--bone);border-color:var(--bone);
+  box-shadow:0 0 16px rgba(242,234,216,.45)}
+.zone{padding:10px 12px}
+.bay{background:var(--panel);border:1px solid var(--edge);border-radius:4px;
+  padding:10px;margin-top:10px}
+.bay h2{font-size:11px;letter-spacing:.16em;color:var(--bone);margin-bottom:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mini{flex:1;min-width:96px}
+.mini .lbl{font-size:9px;color:var(--dim);letter-spacing:.12em}
+.mini .rail{height:26px;background:#1b1b18;border:1px solid var(--edge);position:relative;
+  border-radius:3px;overflow:hidden;touch-action:none;cursor:ew-resize}
+.mini .fill{position:absolute;left:0;top:0;bottom:0;background:var(--bone);opacity:.5}
+.mini .val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:10px;pointer-events:none}
+#grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:8px}
+.pad i{font-size:10px;font-style:normal;letter-spacing:-.02em}
+.pad .bdg{font-size:7px;letter-spacing:-.5px;height:8px;color:var(--acc2)}
+.pad.acc{background:var(--bone);border-color:var(--bone);color:#0a0a08}
+.pad.acc .bdg{color:#0a0a08}
+.pad.ghost{opacity:.22}
+button.mode{font-family:inherit;font-size:11px;letter-spacing:.06em;background:transparent;
+  color:var(--dim);border:1px solid var(--edge);padding:8px 12px;cursor:pointer;border-radius:3px}
+button.mode.arm{color:var(--bone);border-color:var(--bone);background:#1c1c19}
+.pad{aspect-ratio:1.25;background:#1b1b18;border:1px solid var(--edge);border-radius:3px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;
+  font-size:9px;color:var(--dim);touch-action:none}
+.pad b{font-size:7px;opacity:.55}
+.pad.on{background:#232320;border-color:var(--bone);color:#ffffff}
+.pad.play{outline:2px solid var(--acc2);outline-offset:1px}
+#play{font-family:inherit;font-size:13px;letter-spacing:.1em;padding:10px 18px;cursor:pointer;
+  background:transparent;color:var(--bone);border:1px solid var(--bone);border-radius:3px}
+#play.on{background:var(--bone);color:#141412}
+.bay button{font-family:inherit;font-size:11px;background:transparent;color:var(--acc2);
+  border:1px solid var(--acc2);padding:8px 12px;cursor:pointer;border-radius:3px}
+.bay select{font-family:inherit;background:#1b1b18;color:var(--txt);
+  border:1px solid var(--edge);padding:7px;font-size:11px;border-radius:3px}
+.bay input[type=text]{font-family:inherit;background:#1b1b18;color:var(--txt);
+  border:1px solid var(--edge);padding:7px;font-size:11px;border-radius:3px;min-width:90px}
+.msg{font-size:10px;color:var(--dim);margin-top:6px;min-height:14px}
+.hint{font-size:9px;color:var(--dim);letter-spacing:.04em;margin-top:6px;line-height:1.6}
+footer{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;align-items:center;
+  padding:6px 14px;border-top:1px solid var(--edge);background:var(--bg);
+  font-size:10px;color:var(--dim);letter-spacing:.05em;z-index:20}
+footer span:first-child{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#stat{flex:1;text-align:right}
+#stat b{color:var(--bone)}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="faceArrow" data-dir="-1">⫷</span> MΛRROW<b></b> <span class="faceArrow" data-dir="1">⫸</span></h1>
+  <canvas id="scope"></canvas>
+  <button id="pwr">⏻ POWER</button>
+</header>
+
+<div class="zone">
+  <div class="bay">
+    <h2>𝄢 THE DI — phase 1 voice</h2>
+    <div class="row" id="fx1"></div>
+    <div class="row" id="fx2" style="margin-top:8px"></div>
+  </div>
+
+  <div class="bay">
+    <h2>∎ BΛSSLINE — tap: off → on → ACCENT · drag ↕ to pitch</h2>
+    <div class="row" style="align-items:center">
+      <button id="play">▶ PLAY</button>
+      <div class="mini" id="tBpm"></div>
+      <div class="mini" id="tLen"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="mode" id="mSlide">∿ SLIDE</button>
+      <button class="mode" id="mTie">‿ TIE</button>
+      <button class="mode" id="mClr">✕ CLEAR</button>
+    </div>
+    <div id="grid"></div>
+    <div class="hint">∿ SLIDE glides the pitch in and plays LEGATO — no re-attack.
+      ‿ TIE suspends the decay so the note sustains through the step. Both together
+      is the classic 303 tied slide. Arm a mode, then tap pads to flip that property.
+      Hard hits (neither) strike tight and gated; slides and ties flow.</div>
+  </div>
+
+  <div class="bay">
+    <h2>⏺ MΛRROW CAPTURΞ</h2>
+    <div class="row">
+      <span style="font-size:10px;color:var(--dim)">BARS</span>
+      <select id="bBars"><option>1</option><option selected>2</option><option>4</option></select>
+      <button id="bLoop">⇓ LOOP WAV</button>
+    </div>
+    <div class="msg" id="bMsg">warm pre-roll · 32f stereo · seamless</div>
+  </div>
+
+  <div class="bay">
+    <h2>⛃ MΛRROW BAY</h2>
+    <div class="row">
+      <input type="text" id="pName" placeholder="riff name" size="10">
+      <button id="pSave">SAVE</button>
+      <select id="pSel"></select>
+      <button id="pLoad">LOAD</button>
+      <button id="pDel">✕</button>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button id="pExp">⇓ .JSON</button>
+      <button id="pImp">IMPORT</button>
+      <input type="file" id="pFile" accept=".json" style="display:none">
+    </div>
+    <div class="msg" id="pMsg">◆ factory riffs are read-only demo lines — LOAD one and hit ▶</div>
+  </div>
+
+  <div class="bay">
+    <h2>☰ THE DOCTRINE — what MΛRROW becomes</h2>
+    <div class="hint">
+      This is the STUB of the fourth horseman. The full build, per the DI
+      philosophy: <b>TWO LAYERS FROM ONE PERFORMANCE</b> — a pristine
+      compressed DI layer (never removed from the mix, the backbone the rest
+      leans on even mixed to inaudibility) and a PROCESSED layer (drive,
+      circuits, motion) that can drop away for the naked-DI bass break.
+      Planned: layer crossfader + independent stem export of DI vs processed
+      · MONO-BELOW crossover (everything under ~120 Hz summed center, the way
+      bass sits in a professional mix) · analog-model + futurist engines ·
+      slide/accent per step, 303 lineage · sub-lock oscillator tuned an
+      octave under the played note · sidechain-ready envelope out. The stub
+      below is a real playable voice so the horseman rides today.
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>𝄢 MODULE 04 · the signal you stop hearing and never stop needing</span>
+  <span id="stat">STANDBY</span>
+</footer>
+
+<script>
+"use strict";
+/* ═════ MΛRROW · SRC-D2 AUDIO MODULE 04 — PHASE 1 STUB ═════
+   Bass / DI backbone engine. Stub = complete skeleton (power, tempo, seq,
+   bounce, patchless-for-now, full chassis contract) with a minimal honest
+   voice: sine sub-lock + saw layer, one-pole LP tone, AD env, soft drive,
+   MONO output doubled to stereo — because bass sits mono. */
+const NOTE=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const noteName=m=>NOTE[((m%12)+12)%12]+(Math.floor(m/12)-1);
+const P=[
+ /*0*/{k:"lvl",n:"LEVEL",min:0,max:1,d:0.85},
+ /*1*/{k:"root",n:"ROOT",min:24,max:48,d:38,step:true, fmt:v=>noteName(Math.round(v))},
+ /*2*/{k:"blend",n:"DI ⇄ SAW",min:0,max:1,d:0.4},
+ /*3*/{k:"tone",n:"CUTOFF",min:40,max:4000,d:150,exp:true,u:"Hz"},
+ /*4*/{k:"dec",n:"DECAY",min:0.05,max:1.5,d:0.28,exp:true,u:"s"},
+ /*5*/{k:"drive",n:"DRIVE ⌁",min:0,max:1,d:0.25},
+ /*6*/{k:"att",n:"ATTACK",min:0.0005,max:0.05,d:0.003,exp:true,u:"ms"},
+ /*7*/{k:"gld",n:"SLIDE TIME",min:0.01,max:0.3,d:0.06,exp:true,u:"ms"},
+ /*8*/{k:"emod",n:"ENV MOD ◍",min:0,max:1,d:0.45},
+ /*9*/{k:"acc",n:"ACCENT",min:0,max:1,d:0.4},
+ /*10*/{k:"res",n:"RESONANCE",min:0,max:1,d:0.35},
+];
+const NP=P.length;
+const WORKLET_SRC = `
+"use strict";
+const NP=${NP}, TAU=6.283185307179586, NSTEP=16;
+class MarrowCore extends AudioWorkletProcessor {
+  constructor(o){
+    super();
+    const opts=(o&&o.processorOptions)||{};
+    this.p=Float64Array.from(${JSON.stringify(P.map(q=>q.d))});
+    /* ── one voice, two layers ── */
+    this.ph=0; this.ph2=0;             /* DI sine phase · SAW phase */
+    this.env=0; this.l1=0; this.l2=0; this.l3=0; this.l4=0;
+    this.f=55; this.fT=55;             /* live freq · glide target */
+    this.atk=false;                    /* in the attack ramp */
+    this.hold=false;                   /* TIE: decay suspended */
+    this.strike=false; this.pend=null; /* click-free retrigger (VAPOR lesson) */
+    this.vel=0.72; this.acc=0;
+    /* ── sequencer: 16 steps of 16ths ── */
+    this.steps=[];
+    for(let i=0;i<NSTEP;i++) this.steps.push({s:0,pitch:0,sl:0,ti:0});
+    this.len=NSTEP;
+    this.bpm=136; this.playing=false;
+    this.step=-1; this.next=0; this.count=0; this.stopAfter=0;
+    this.kStrike=1-Math.exp(-1/(0.002*sampleRate));
+    if(opts.state){
+      const st=opts.state;
+      this.bpm=st.bpm; this.len=st.len||NSTEP;
+      for(let j=0;j<NP;j++) if(st.p[j]!==undefined) this.p[j]=st.p[j];
+      if(st.steps) for(let i=0;i<NSTEP;i++) if(st.steps[i])
+        this.steps[i]={s:st.steps[i].s|0, pitch:st.steps[i].pitch|0,
+                       sl:st.steps[i].sl|0, ti:st.steps[i].ti|0};
+    }
+    if(opts.autoplay){ this.playing=true; this.stopAfter=opts.stopAfter||0; }
+    this.port.onmessage=e=>{ const m=e.data;
+      if(m[0]==='p') this.p[m[1]]=m[2];
+      else if(m[0]==='seq'){
+        for(let i=0;i<NSTEP;i++) if(m[1][i])
+          this.steps[i]={s:m[1][i].s|0, pitch:m[1][i].pitch|0,
+                         sl:m[1][i].sl|0, ti:m[1][i].ti|0};
+        this.len=m[2]||NSTEP;
+      }
+      else if(m[0]==='bpm') this.bpm=m[1];
+      else if(m[0]==='playat') this.playAt=m[1];
+      else if(m[0]==='play'){ this.playing=!!m[1]; this.step=-1; this.next=0;
+        this.count=0; this.stopAfter=0;
+        if(!m[1]){ this.hold=false; this.strike=false; this.pend=null; } }
+      else if(m[0]==='panic'){ this.env=0; this.atk=false; this.hold=false;
+        this.strike=false; this.pend=null; }
+    };
+    this.port.postMessage(['e','JS-CORE·RIFF']);
+  }
+  noteFreq(pitch){ return 440*Math.pow(2,(Math.round(this.p[1])+pitch-69)/12); }
+  fire(st){
+    this.acc = st.s===2 ? 1 : 0;
+    this.vel = st.s===2 ? 1.0 : 0.72;
+    if(st.sl){
+      /* SLIDE = 303 LEGATO. The pitch GLIDES in, the envelope does NOT
+         re-attack, and the phase keeps running. This is the one case where
+         resetting phase would be actively wrong: there is no new attack to
+         hide the discontinuity behind. */
+      this.fT=this.noteFreq(st.pitch);
+      this.hold=!!st.ti;
+      return;
+    }
+    /* HARD HIT. Reset the phase so every hit has an identical transient — but
+       a phase reset while the voice is LOUD is a step in the waveform, and at
+       40Hz that step is a click on every single note. Same lesson VAPOR taught
+       us: dip first, seed at the bottom, where the step is inaudible. */
+    if(this.env>0.02){ this.strike=true; this.pend=st; }
+    else this.seed(st);
+  }
+  seed(st){
+    const tgt=this.noteFreq(st.pitch);
+    this.f=tgt; this.fT=tgt;
+    this.ph=0; this.ph2=0;
+    /* ↑ MEASURED, not assumed. The sine starts at 0; a saw at phase 0 starts at
+       −1, so I tried 0.5 to make both layers begin at zero. It was a REGRESSION:
+       at 0.5 the ramp climbs 0→+1 first, so the decaying envelope weights the
+       POSITIVE half more and the bias got BIGGER (−1.6e-3 → +4.6e-3), while the
+       saw stopped opposing the sine's rise and peak jumped −8.7 → −2.8 dBFS —
+       6 dB of headroom, gone. Left at 0: the saw's opening −1 partially cancels
+       the sine's rise, which is where the headroom comes from, and the residual
+       DC is −56 dB, which is nothing. */
+    this.atk=true;
+    this.hold=!!st.ti;
+  }
+  process(_, outputs){
+    const out=outputs[0]; if(!out||!out[0]) return true;
+    const L=out[0], R=out[1]||out[0], n=L.length, sr=sampleRate, p=this.p;
+    if(this.playAt && currentFrame>=this.playAt){       /* frame-exact start */
+      this.playAt=0; this.playing=true; this.step=-1; this.next=0;
+      this.count=0; this.stopAfter=0;
+    }
+    if(this.playing){
+      this.next-=n;
+      while(this.next<=0){
+        if(this.stopAfter && this.count>=this.stopAfter){ this.playing=false; break; }
+        this.step=(this.step+1)%this.len; this.count++;
+        this.next += sr*15/this.bpm;          /* 16 steps = one bar of 16ths */
+        const st=this.steps[this.step];
+        if(st && st.s>0){
+          if(st.ti && this.env>0.01){
+            /* TIE onto a sounding note: suspend the decay, do not re-attack.
+               A tie with nothing to hold is meaningless, so if the voice has
+               already died we fire it normally rather than sustain silence. */
+            this.hold=true;
+            const tgt=this.noteFreq(st.pitch);
+            if(st.sl) this.fT=tgt; else { this.f=tgt; this.fT=tgt; }
+            if(st.s===2){ this.acc=1; this.vel=1.0; }
+          } else this.fire(st);
+        } else this.hold=false;                /* rest: let it decay away */
+        this.port.postMessage(['stp',this.step]);
+      }
+    }
+    const decK=Math.exp(-1/(Math.max(0.01,p[4])*sr));
+    const atkK=1-Math.exp(-1/(Math.max(0.0005,p[6])*sr));
+    const gldK=1-Math.exp(-1/(Math.max(0.005,p[7])*sr));
+    const drv=1+p[5]*6, dNorm=Math.tanh(drv);
+    const lvl=p[0], blend=p[2], fcBase=p[3], emod=p[8], accAmt=p[9], res=p[10]||0;
+    const fcMax=sr*0.45;
+    for(let s=0;s<n;s++){
+      /* ── envelope ── */
+      if(this.strike){
+        this.env+=(0-this.env)*this.kStrike;
+        if(this.env<0.02){ this.strike=false;
+          if(this.pend){ this.seed(this.pend); this.pend=null; } }
+      } else if(this.atk){
+        this.env+=(1.02-this.env)*atkK;
+        if(this.env>=1){ this.env=1; this.atk=false; }
+      } else if(!this.hold){
+        this.env*=decK;
+      }
+      /* ── pitch glide (one-pole; SLIDE steps ramp, hard hits snap) ── */
+      this.f += (this.fT-this.f)*gldK;
+      /* ── the squelch: cutoff rides the envelope, accent opens it further ── */
+      const fc=Math.min(fcMax, fcBase*Math.pow(2, this.env*(emod + accAmt*this.acc)*4));
+      const tK=1-Math.exp(-TAU*fc/sr);
+      /* resonance is compensated at high cutoff, where a naive ladder runs away,
+         and the passband loss four poles cost us is made back with mk */
+      const fbAmt=res*4.2*(1-0.18*tK*tK);
+      const mk=1+res*1.1;
+      /* ── two layers, deliberately unequal ── */
+      const inc=this.f/sr;
+      this.ph=(this.ph+inc)%1;
+      this.ph2=(this.ph2+inc)%1;
+      const di=Math.sin(this.ph*TAU)*this.env;
+      /* ↑ DI: NO filter, NO drive. The immutable sub anchor. Crank DRIVE to
+         the ceiling and automate the CUTOFF all you like — the weight down
+         here does not move an inch. That split is the whole point. */
+      /* ═ A REAL FILTER ═
+         This was ONE POLE — 6 dB/octave. A 303's is 24. At a 150 Hz cutoff a
+         1 kHz harmonic came out only 16 dB down, so the saw stayed buzzy no
+         matter how far you closed it: that is not a filter, it is a suggestion.
+         Four poles with a resonant feedback path — the ladder — take the same
+         harmonic down 65 dB, and the resonance is the half of a 303 that was
+         missing entirely.
+         The tanh sits in the FEEDBACK, which is where the real circuit puts it:
+         it keeps the loop stable at high resonance and is exactly what gives a
+         ladder its growl instead of a scream. */
+      const sawRaw=(this.ph2*2-1)*this.env;
+      const u=Math.tanh(sawRaw - fbAmt*this.l4);
+      this.l1 += tK*(u        - this.l1);
+      this.l2 += tK*(this.l1  - this.l2);
+      this.l3 += tK*(this.l2  - this.l3);
+      this.l4 += tK*(this.l3  - this.l4);
+      const sawOut=Math.tanh(this.l4*mk*drv)/dNorm;   /* only the SAW is driven */
+      const x=di*(1-blend)+sawOut*blend;
+      const y=Math.tanh(x*lvl*this.vel*1.15);
+      L[s]=y; R[s]=y;                          /* MONO twice: bass sits mono */
+    }
+    const FZ=v=>(v<1e-15&&v>-1e-15)?0:v;
+    this.l1=FZ(this.l1); this.l2=FZ(this.l2); this.l3=FZ(this.l3); this.l4=FZ(this.l4);
+    if(this.env<1e-20) this.env=0;
+    return true;
+  }
+}
+registerProcessor('marrow-core', MarrowCore);
+`;
+
+
+/* ═══════════ SRCD HOSTED AUDIO ═══════════
+   Inside SUBSTRΛTΞ this module does NOT mint an AudioContext. It hands its
+   worklet SOURCE up to the chassis; the chassis loads it into the ONE context
+   it owns, creates the node, and everything below talks to a PROXY whose port
+   forwards up the pipe. Five AudioContexts, five output streams and four
+   MediaStream bridges across four independent clock domains collapse into one
+   context and no bridges. That bridge was the glitchiest path in Web Audio and
+   the reason a phone crackled the moment a second module woke up.
+   STANDALONE IS UNTOUCHED: no host, no proxy — the module builds its own
+   context exactly as it always did, and opens on its own as a whole instrument. */
+const SRCD_MOD = "bass";
+const SRCD_HOSTED = (window.parent !== window);
+let __scopeBuf=null, __proxy=null, __decCtx=null;
+function srcdCtx(sr){
+  return { sampleRate:sr, baseLatency:0, state:"running",
+    close(){ try{ parent.postMessage({src:"srcd-duo",cmd:"wl-kill",mod:SRCD_MOD},"*"); }catch(_){} },
+    /* decoding needs no OUTPUT DEVICE — an OfflineAudioContext holds none, and
+       not holding one is the entire point of this exercise */
+    decodeAudioData(buf){
+      if(!__decCtx) __decCtx=new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(1,1,sr);
+      return __decCtx.decodeAudioData(buf);
+    } };
+}
+function srcdAnalyser(){   /* the chassis owns the real one and ships us frames */
+  return { fftSize:1024, frequencyBinCount:512,
+    getByteTimeDomainData(a){
+      if(__scopeBuf) a.set(__scopeBuf.subarray(0,Math.min(a.length,__scopeBuf.length)));
+      else a.fill(128);
+    },
+    getByteFrequencyData(a){ a.fill(0); },
+    connect(n){ return n||this; }, disconnect(){} };
+}
+function srcdMount(o){
+  return new Promise((res,rej)=>{
+    const to=setTimeout(()=>{ window.removeEventListener("message",h);
+      rej(new Error("chassis did not answer wl-mount")); },8000);
+    function h(e){ const d=e.data;
+      if(!d || d.src!=="srcd-duo" || d.mod!==SRCD_MOD) return;
+      if(d.cmd==="wl-ready"){
+        clearTimeout(to); window.removeEventListener("message",h);
+        __proxy={ port:{
+            postMessage(m){ try{ parent.postMessage({src:"srcd-duo",cmd:"wl-send",
+              mod:SRCD_MOD,m},"*"); }catch(_){} },
+            onmessage:null },
+          connect(n){ return n||this; }, disconnect(){} };
+        res({node:__proxy, sr:d.sr});
+      } else if(d.cmd==="wl-fail"){
+        clearTimeout(to); window.removeEventListener("message",h);
+        rej(new Error(d.err||"chassis failed to mount the worklet"));
+      }
+    }
+    window.addEventListener("message",h);
+    parent.postMessage(Object.assign({src:"srcd-duo",cmd:"wl-mount",mod:SRCD_MOD},o),"*");
+  });
+}
+window.addEventListener("message",e=>{
+  const d=e.data; if(!d || d.src!=="srcd-duo") return;
+  if(d.cmd==="wl-msg" && __proxy && __proxy.port.onmessage) __proxy.port.onmessage({data:d.m});
+  else if(d.cmd==="scope") __scopeBuf=d.data;
+  else if(d.cmd==="wl-state-req"){
+    /* THE CHASSIS WANTS TO RENDER US OFFLINE. Every module already knows how to
+       bounce itself — this just hands the same recipe upward so SUBSTRΛTΞ can
+       bounce the WHOLE console at once, through its own mixer, with no deadline
+       to miss. That is the entire trick: OfflineAudioContext has no real-time
+       budget. It renders faster than the clock and cannot glitch. */
+    let pay=null;
+    try{ if(typeof window.__srcdRenderState==="function") pay=window.__srcdRenderState(); }
+    catch(err){ pay=null; }
+    try{ parent.postMessage(Object.assign({src:"srcd-duo",cmd:"wl-state",
+      mod:SRCD_MOD, ok:!!pay}, pay||{}), "*"); }catch(_){}
+  }
+});
+/* one boot path, two worlds. Returns {ctx,node,analyser,hosted}. */
+async function srcdBoot(o){
+  /* GEMINI'S CATCH (verified correct): the fallback code below already
+     existed for the true-standalone case — it just never ran when hosted
+     mount FAILED. A module embedded in the chassis has no less right to a
+     speaker than one opened alone; it should degrade, not die. */
+  async function buildStandalone(latency){
+    const c=new (window.AudioContext||window.webkitAudioContext)({latencyHint:latency});
+    let viaUrl=false;
+    if(o.url){ try{ await c.audioWorklet.addModule(o.url); viaUrl=true; }catch(_){} }
+    if(!viaUrl) await c.audioWorklet.addModule(
+      URL.createObjectURL(new Blob([o.source],{type:"application/javascript"})));
+    const n=new AudioWorkletNode(c,o.processor,
+      {outputChannelCount:[2], processorOptions:o.opts||{}});
+    const a=c.createAnalyser(); a.fftSize=1024;
+    n.connect(a).connect(c.destination);
+    return {ctx:c, node:n, analyser:a, hosted:false};
+  }
+  if(SRCD_HOSTED){
+    try{
+      const r=await srcdMount({source:o.source, url:o.url||null, processor:o.processor,
+        opts:o.opts||{}, lawcap:o.lawcap||0});
+      return {ctx:srcdCtx(r.sr), node:r.node, analyser:srcdAnalyser(), hosted:true};
+    }catch(mountErr){
+      /* wl-fail or the 8s timeout in srcdMount. Chassis busy, worklet source
+         rejected, whatever — we don't know why, so bias toward resilience:
+         force 'playback', not whatever o.latency says, since that value was
+         only ever meant for the true-standalone caller. Still embedded, but
+         now going straight to the device instead of through the chassis —
+         exactly how every module worked before this session's refactor. */
+      console.warn("SRCD hosted mount failed, falling back to standalone:", mountErr);
+      const r=await buildStandalone("playback");
+      return {...r, fellBack:true};
+    }
+  }
+  return buildStandalone(o.latency||"interactive");
+}
+let ctx=null,node=null,analyser=null,booting=false,playing=false;
+const $=id=>document.getElementById(id);
+const NSTEP=16;
+const blank=()=>Array.from({length:NSTEP},()=>({s:0,pitch:0,sl:0,ti:0}));
+const state={ bpm:136, len:NSTEP, p:P.map(q=>q.d), steps:blank(), mode:null };
+/* a seed riff that demonstrates every feature the moment you hit PLAY */
+[[0,1,0,0,0],[3,1,0,0,0],[6,1,12,1,0],[8,2,0,0,0],[11,1,-5,0,0],[14,1,0,1,0]]
+  .forEach(([i,sv,pt,sl,ti])=>{ state.steps[i]={s:sv,pitch:pt,sl:sl,ti:ti}; });
+function pushSeq(){ if(node) node.port.postMessage(['seq', state.steps.map(x=>({...x})), state.len]); }
+function stat(h){ $("stat").innerHTML=h; }
+function miniFader(el,label,min,max,val,fmt,onset,exp){
+  el.innerHTML='<div class="lbl">'+label+'</div>'
+    +'<div class="rail"><div class="fill"></div><div class="val"></div></div>';
+  const rail=el.querySelector(".rail"),fill=el.querySelector(".fill"),vv=el.querySelector(".val");
+  let v=val;
+  const toN=x=>exp?Math.log(x/min)/Math.log(max/min):(x-min)/(max-min);
+  const toV=nn=>exp?min*Math.pow(max/min,nn):min+nn*(max-min);
+  const render=()=>{ fill.style.width=(toN(v)*100)+"%"; vv.textContent=fmt(v); };
+  const drag=e=>{ const r=rail.getBoundingClientRect();
+    const nn=Math.min(1,Math.max(0,((e.touches?e.touches[0].clientX:e.clientX)-r.left)/r.width));
+    v=toV(nn); render(); onset(v); };
+  rail.addEventListener("pointerdown",e=>{ rail.setPointerCapture(e.pointerId); drag(e);
+    const mv=ev=>drag(ev),up=()=>{rail.removeEventListener("pointermove",mv);
+      rail.removeEventListener("pointerup",up);};
+    rail.addEventListener("pointermove",mv); rail.addEventListener("pointerup",up); });
+  render(); return {set(x){v=x;render();}};
+}
+const pF=[];                       /* refs so a riff load can repaint the bank */
+P.forEach((q,j)=>{
+  const h=document.createElement("div"); h.className="mini";
+  (j<3?$("fx1"):$("fx2")).appendChild(h);
+  pF.push(miniFader(h,q.n,q.min,q.max,state.p[j],
+    q.fmt||(v=>q.u==="s"?v.toFixed(2)+"s"
+      :q.u==="ms"?(v*1000).toFixed(1)+"ms"        /* ATTACK / SLIDE TIME read
+        as "0%" before — the formatter never knew the "ms" unit they declare */
+      :q.u==="Hz"?Math.round(v)+"Hz":Math.round(v*100)+"%"),
+    v=>{ const vv=q.step?Math.round(v):v; state.p[j]=vv;
+      if(node) node.port.postMessage(['p',j,vv]);
+      if(j===1) renderPads();     /* ROOT moved — every pad's note name shifts */
+    }, q.exp));
+});
+/* pad grid — the OVERTONE RIOT idiom, so the two sequencers feel like one
+   instrument: tap cycles off→on→ACCENT, vertical drag pitches. The two mode
+   buttons re-purpose the TAP (not the drag) to flip slide/tie, which is the
+   only way to fit four properties per step onto a phone without a sub-menu. */
+const pads=[];
+for(let i=0;i<NSTEP;i++){
+  const e=document.createElement("div");
+  e.className="pad";
+  e.innerHTML='<b></b><i></i><span class="bdg"></span>';
+  const render=()=>{
+    const st=state.steps[i];
+    e.classList.toggle("ghost", i>=state.len);
+    e.classList.toggle("on", st.s===1);
+    e.classList.toggle("acc", st.s===2);
+    e.children[0].textContent=i+1;
+    e.children[1].textContent = st.s ? noteName(Math.round(state.p[1])+st.pitch) : "·";
+    e.children[2].textContent = (st.sl?"∿":"")+(st.ti?"‿":"");
+  };
+  $("grid").appendChild(e); pads.push({el:e, render});
+  e.addEventListener("pointerdown",ev=>{
+    e.setPointerCapture(ev.pointerId);
+    const y0=ev.clientY, p0=state.steps[i].pitch; let dragged=false;
+    e.onpointermove=m=>{
+      const dy=y0-m.clientY;
+      if(!dragged && Math.abs(dy)<7) return;
+      dragged=true;
+      state.steps[i].pitch=Math.min(24,Math.max(-24,p0+Math.round(dy/8)));
+      render();
+    };
+    e.onpointerup=e.onpointercancel=()=>{
+      e.onpointermove=null;
+      if(!dragged){
+        const st=state.steps[i];
+        if(state.mode==='sl') st.sl=st.sl?0:1;
+        else if(state.mode==='ti') st.ti=st.ti?0:1;
+        else st.s=(st.s+1)%3;                 /* off → on → ACCENT → off */
+      }
+      render(); pushSeq();
+    };
+  });
+  render();
+}
+function renderPads(){ pads.forEach(p2=>p2.render()); }
+function armMode(m){
+  state.mode = state.mode===m ? null : m;
+  $("mSlide").classList.toggle("arm", state.mode==='sl');
+  $("mTie").classList.toggle("arm", state.mode==='ti');
+}
+$("mSlide").addEventListener("click",()=>armMode('sl'));
+$("mTie").addEventListener("click",()=>armMode('ti'));
+$("mClr").addEventListener("click",()=>{ state.steps=blank(); renderPads(); pushSeq(); });
+const bpmF=miniFader($("tBpm"),"TEMPO",40,220,state.bpm,v=>Math.round(v)+" BPM",
+  v=>{ state.bpm=Math.round(v); if(node) node.port.postMessage(['bpm',state.bpm]); });
+const lenF=miniFader($("tLen"),"STEPS",1,16,state.len,v=>Math.round(v)+" steps",
+  v=>{ state.len=Math.round(v); renderPads(); pushSeq(); });
+$("play").addEventListener("click",()=>{
+  if(!node){ stat("⏻ power on first"); return; }
+  playing=!playing;
+  $("play").classList.toggle("on",playing);
+  $("play").textContent=playing?"■ STOP":"▶ PLAY";
+  node.port.postMessage(['play',playing?1:0]);
+  if(!playing) pads.forEach(p2=>p2.el.classList.remove("play"));
+});
+/* ═════ MΛRROW BAY — riff persistence (the RIOT/VAPOR/CULT idiom) ═════
+   fmt "marrow-riff" v1: bpm · len · p[11] · steps[16]{s,pitch,sl,ti}.
+   Factory riffs (◆) are read-only demo lines so a testing session never
+   starts from a blank grid — LOAD one, hit ▶, capture. */
+const BANK="marrow.riffs.v1";
+const FACTORY={
+  "◆ SEED RIDE":{fmt:"marrow-riff",v:1,name:"◆ SEED RIDE",bpm:136,len:16,
+    p:[0.85,38,0.4,150,0.28,0.25,0.003,0.06,0.45,0.4,0.35],
+    steps:[{s:1},{},{},{s:1},{},{},{s:1,pitch:12,sl:1},{},{s:2},{},{},
+           {s:1,pitch:-5},{},{},{s:1,sl:1},{}]},
+  "◆ 808 GLIDE":{fmt:"marrow-riff",v:1,name:"◆ 808 GLIDE",bpm:136,len:16,
+    p:[0.9,26,0.12,110,0.85,0.18,0.004,0.14,0.25,0.35,0.12],
+    steps:[{s:2},{},{},{s:1,ti:1},{s:1,sl:1,ti:1},{},{},{s:1,pitch:3},{},{},
+           {s:2,pitch:-2},{},{s:1,pitch:5,sl:1},{s:1,pitch:5,ti:1},{},{s:1,sl:1}]},
+  "◆ ACID 16":{fmt:"marrow-riff",v:1,name:"◆ ACID 16",bpm:136,len:16,
+    p:[0.8,38,0.92,320,0.16,0.6,0.001,0.05,0.85,0.7,0.8],
+    steps:[{s:2},{s:1,pitch:12},{s:1},{s:1,pitch:12,sl:1},{s:1,pitch:-12},{s:1},
+           {s:2,pitch:3,sl:1},{s:1,pitch:3},{s:1,pitch:-5},{s:1,pitch:-5,sl:1,ti:1},
+           {s:1},{s:2,pitch:12},{s:1,pitch:7,sl:1},{s:1},{s:1,pitch:-12},{s:2,sl:1}]},
+};
+function captureRiff(){
+  return {fmt:"marrow-riff",v:1,name:$("pName").value.trim()||"riff",
+    bpm:state.bpm,len:state.len,p:[...state.p],
+    steps:state.steps.map(x=>({s:x.s,pitch:x.pitch,sl:x.sl,ti:x.ti}))};
+}
+function applyRiff(k){
+  if(!k||k.fmt!=="marrow-riff") throw new Error("not a marrow riff");
+  state.bpm=Math.min(220,Math.max(40,Math.round(+k.bpm)||136));
+  state.len=Math.min(16,Math.max(1,Math.round(+k.len)||16));
+  state.p=P.map((q,j)=>{                      /* TOTAL snapshot (RIOT lesson) */
+    let v=(k.p&&k.p[j]!==undefined)?+k.p[j]:q.d;
+    if(!isFinite(v)) v=q.d;
+    return Math.min(q.max,Math.max(q.min, q.step?Math.round(v):v));
+  });
+  state.steps=blank();
+  (k.steps||[]).slice(0,NSTEP).forEach((st,i)=>{ if(!st) return;
+    state.steps[i]={s:[0,1,2].includes(st.s|0)?st.s|0:0,
+      pitch:Math.min(24,Math.max(-24,st.pitch|0)),
+      sl:st.sl?1:0, ti:st.ti?1:0}; });
+  /* repaint everything the riff touched */
+  bpmF.set(state.bpm); lenF.set(state.len);
+  P.forEach((q,j)=>pF[j].set(state.p[j]));
+  renderPads();
+  /* and tell the engine */
+  if(node){
+    node.port.postMessage(['bpm',state.bpm]);
+    for(let j=0;j<NP;j++) node.port.postMessage(['p',j,state.p[j]]);
+    pushSeq();
+  }
+  $("pName").value=(k.name||"").replace(/^◆ /,"");
+}
+function bank(){ try{return JSON.parse(localStorage.getItem(BANK)||"{}");}catch(_){return {};} }
+function renderBank(sel){
+  const b=bank(), el=$("pSel"); el.innerHTML="";
+  Object.keys(FACTORY).forEach(k2=>{ const o=document.createElement("option");
+    o.textContent=k2; el.appendChild(o); });
+  Object.keys(b).sort().forEach(k2=>{ const o=document.createElement("option");
+    o.textContent=k2; el.appendChild(o); });
+  if(sel) el.value=sel;
+}
+const pMsg=t=>{ $("pMsg").textContent=t; };
+$("pSave").addEventListener("click",()=>{
+  const k=captureRiff();
+  if(k.name.startsWith("◆")){ pMsg("✕ ◆ names are reserved for factory riffs"); return; }
+  const b=bank(); b[k.name]=k;
+  try{ localStorage.setItem(BANK,JSON.stringify(b)); pMsg("⛃ saved: "+k.name); renderBank(k.name); }
+  catch(e){ pMsg("✕ storage unavailable — use ⇓ .JSON instead"); }
+});
+$("pLoad").addEventListener("click",()=>{
+  const nm=$("pSel").value, k=FACTORY[nm]||bank()[nm];
+  if(!k){ pMsg("✕ nothing selected"); return; }
+  try{ applyRiff(JSON.parse(JSON.stringify(k))); pMsg("⌁ loaded: "+nm); }
+  catch(e){ pMsg("✕ "+e.message); }
+});
+$("pDel").addEventListener("click",()=>{
+  const nm=$("pSel").value;
+  if(FACTORY[nm]){ pMsg("✕ factory riffs are read-only"); return; }
+  const b=bank(); if(!(nm in b)){ pMsg("✕ nothing selected"); return; }
+  delete b[nm]; try{ localStorage.setItem(BANK,JSON.stringify(b)); }catch(_){}
+  renderBank(); pMsg("✕ deleted: "+nm);
+});
+$("pExp").addEventListener("click",()=>{
+  const k=captureRiff();
+  const bl=new Blob([JSON.stringify(k,null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(bl);
+  a.download=k.name.replace(/[^\w\- ]+/g,"")+"_"
+    +new Date().toISOString().slice(11,19).replace(/:/g,"")+".marrow.json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  pMsg("⇓ "+a.download);
+});
+$("pImp").addEventListener("click",()=>$("pFile").click());
+$("pFile").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ applyRiff(JSON.parse(await f.text())); pMsg("⇑ imported: "+f.name); }
+  catch(err){ pMsg("✕ couldn't import: "+(err.message||"bad file")); }
+  e.target.value="";
+});
+renderBank();
+
+/* capture */
+function wavStereo32f(L,R,rate){
+  const n=L.length, data=new Float32Array(n*2);
+  for(let i=0;i<n;i++){ data[i*2]=L[i]; data[i*2+1]=R[i]; }
+  const bytes=data.length*4, buf=new ArrayBuffer(58+bytes), v=new DataView(buf);
+  const W=(o,s2)=>{for(let i=0;i<s2.length;i++)v.setUint8(o+i,s2.charCodeAt(i));};
+  W(0,"RIFF"); v.setUint32(4,50+bytes,true); W(8,"WAVE");
+  W(12,"fmt "); v.setUint32(16,18,true); v.setUint16(20,3,true); v.setUint16(22,2,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate*8,true); v.setUint16(32,8,true);
+  v.setUint16(34,32,true); v.setUint16(36,0,true);
+  W(38,"fact"); v.setUint32(42,4,true); v.setUint32(46,n,true);
+  W(50,"data"); v.setUint32(54,bytes,true);
+  new Uint8Array(buf,58).set(new Uint8Array(data.buffer));
+  return new Blob([buf],{type:"audio/wav"});
+}
+$("bLoop").addEventListener("click",async()=>{
+  if(!state.steps.some(v=>v.s>0)){ $("bMsg").textContent="✕ nothing sequenced"; return; }
+  const bars=+$("bBars").value;
+  $("bMsg").textContent="⏳ rendering…";
+  try{
+    /* a "bar" is now the pattern LENGTH in 16ths, not a fixed 8 eighths — so a
+       7-step pattern bounces as a 7-step loop, not a mangled 8. */
+    const rate=48000, barS=state.len*15/state.bpm, secs=barS*(bars+1);
+    const oc=new OfflineAudioContext(2,Math.ceil(secs*rate),rate);
+    const blob=new Blob([WORKLET_SRC],{type:"application/javascript"});
+    await oc.audioWorklet.addModule(URL.createObjectURL(blob));
+    const bn=new AudioWorkletNode(oc,"marrow-core",{outputChannelCount:[2],
+      processorOptions:{state:{bpm:state.bpm, len:state.len, p:[...state.p],
+          steps:state.steps.map(x=>({...x}))},
+        autoplay:true, stopAfter:(bars+1)*state.len}});
+    bn.connect(oc.destination);
+    const buf=await oc.startRendering();
+    const cut=Math.round(barS*rate), keep=Math.round(bars*barS*rate);
+    const nm="marrow-loop-"+state.bpm+"bpm-"+bars+"bar-"
+      +new Date().toISOString().slice(11,19).replace(/:/g,"");
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(wavStereo32f(
+      buf.getChannelData(0).slice(cut,cut+keep),
+      buf.getChannelData(1).slice(cut,cut+keep),rate));
+    a.download=nm+".wav"; document.body.appendChild(a); a.click(); a.remove();
+    $("bMsg").textContent="⇓ "+nm+".wav";
+  }catch(e){ $("bMsg").textContent="✕ "+(e.message||e); }
+});
+/* boot */
+$("pwr").addEventListener("click",async()=>{
+  if(booting) return;
+  if(ctx){ ctx.close(); ctx=null; node=null; analyser=null; playing=false;
+    $("pwr").classList.remove("on"); $("play").classList.remove("on");
+    $("play").textContent="▶ PLAY"; pads.forEach(p2=>p2.el.classList.remove("play"));
+    stat("STANDBY"); return; }
+  booting=true; stat("⌛ waking…");
+  try{
+    /* ═ EMBEDDED ⇒ 'playback', ALWAYS ═
+       Inside SUBSTRATE this module's audio never reaches a speaker: it goes to a
+       MediaStreamDestination that the chassis reads. A low-latency buffer buys
+       NOTHING here — and costs everything. 'interactive' asks for the smallest
+       output buffer the device will give; on a phone that is a couple of ms of
+       slack, and with five AudioContexts alive at once the render thread simply
+       misses its deadline. A missed deadline is a click. Miss them at a steady
+       rate and you have a CLOCK — arriving the moment the context wakes, with a
+       stone-silent DSP core. The latency that matters is the CHASSIS's, and the
+       chassis already runs 'playback'. */
+    const B=await srcdBoot({source:WORKLET_SRC, processor:"marrow-core",
+      latency:"interactive"});
+    ctx=B.ctx; node=B.node; analyser=B.analyser; window.__srcdFellBack=!!B.fellBack;
+    node.port.onmessage=e=>{ const d=e.data;
+      if(d[0]==='e') stat("LIVE · "+ctx.sampleRate+" Hz · <b>"+d[1]+"</b> · phase-1 stub · mono→stereo"+(window.__srcdFellBack?" · DIRECT (chassis mount failed)":""));
+      if(d[0]==='stp') pads.forEach((p2,i)=>p2.el.classList.toggle("play",playing&&i===d[1]));
+    };
+    node.port.postMessage(['bpm',state.bpm]);
+    pushSeq();
+    for(let j=0;j<NP;j++) node.port.postMessage(['p',j,state.p[j]]);
+    $("pwr").classList.add("on");
+  }catch(err){ stat("✕ boot failed: "+(err.message||err)); ctx=null; }
+  booting=false;
+});
+/* scope */
+const sc=$("scope"), sg=sc.getContext("2d");
+const scBuf=new Uint8Array(1024); let scLast=0;
+function scLoop(now){
+  if(!window.__faceOn){ requestAnimationFrame(scLoop); return; }
+  if(now-scLast>=33){
+    scLast=now;
+    const dpr=devicePixelRatio||1, w=sc.clientWidth*dpr, h=sc.clientHeight*dpr;
+    if(sc.width!==w||sc.height!==h){ sc.width=w; sc.height=h; }
+    sg.fillStyle="#0b0b0a"; sg.fillRect(0,0,w,h);
+    sg.strokeStyle="#292824"; sg.beginPath(); sg.moveTo(0,h/2); sg.lineTo(w,h/2); sg.stroke();
+    if(analyser){
+      analyser.getByteTimeDomainData(scBuf);
+      sg.strokeStyle="#f2ead8"; sg.lineWidth=1.4*dpr;
+      sg.shadowColor="#f2ead8"; sg.shadowBlur=6;
+      sg.beginPath();
+      for(let i=0;i<scBuf.length;i++){
+        const x=i/scBuf.length*w, y=scBuf[i]/255*h;
+        i?sg.lineTo(x,y):sg.moveTo(x,y);
+      }
+      sg.stroke(); sg.shadowBlur=0;
+    }
+  }
+  requestAnimationFrame(scLoop);
+}
+/* ═ DON'T DRAW FOR NOBODY ═ the chassis parks inactive faces off-screen with a
+   transform, so this iframe keeps compositing and its rAF keeps firing. Skip the
+   scope work when we're not the face on show — the audio thread needs the CPU. */
+window.__faceOn = true;
+window.addEventListener('message', e=>{
+  const d=e.data;
+  if(d && d.src==='srcd-duo' && d.cmd==='face') window.__faceOn = !!d.on;
+});
+
+requestAnimationFrame(scLoop);
+/* chassis contract */
+if(window.parent!==window){
+  document.body.classList.add("embedded");
+  document.querySelectorAll(".faceArrow").forEach(a=>
+    a.addEventListener("click",()=>parent.postMessage({src:"srcd-duo",cmd:"switch",
+      dir:+a.dataset.dir||1},"*")));
+  window.addEventListener("message",e=>{
+    const d=e.data; if(!d||d.src!=="srcd-duo"||d.cmd!=="transport") return;
+    if(!node) return;
+    if(d.on && !playing) $("play").click();
+    if(!d.on && playing) $("play").click();
+  });
+}
+
+/* ═ how this module describes itself to a chassis-wide offline render ═ */
+window.__srcdRenderState = () => ({
+  processor:"marrow-core", source:WORKLET_SRC, url:null,
+  opts:{ state:{bpm:state.bpm, len:state.len, p:[...state.p],
+                steps:state.steps.map(x=>({...x}))}, autoplay:1 }
+});
+</script>
+</body>
+</html>
