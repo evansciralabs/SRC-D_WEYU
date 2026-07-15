@@ -743,49 +743,59 @@ function mixerOnce(){ if(!_mixP) _mixP=ensureMixer(); return _mixP; }
    together could both sail past its `if(mctx) return` with `mix` still undefined.
    One promise, shared. */
 
-async function wlMount(win, d){
-  try{
+async function wlMount(win, d) {
+  try {
     await mixerOnce();
-    if(mctx.state==='suspended') await mctx.resume();
-    if(!wlReg.has(d.processor)){
-      let viaUrl=false;
-      if(d.url){ try{ await mctx.audioWorklet.addModule(d.url); viaUrl=true; }catch(_){} }
-      if(!viaUrl){
-        if(!d.source) throw new Error('no worklet source');
-        await mctx.audioWorklet.addModule(
-          URL.createObjectURL(new Blob([d.source],{type:'application/javascript'})));
+    if (mctx.state === 'suspended') await mctx.resume();
+    
+    // Check if the processor is already registered to avoid re-compilation conflicts
+    if (!wlReg.has(d.processor)) {
+      let viaUrl = false;
+      if (d.url) { 
+        try { await mctx.audioWorklet.addModule(d.url); viaUrl = true; } 
+        catch (e) { console.warn("SUBSTRΛTΞ // URL mount failed, falling back to blob", e); } 
       }
-      wlReg.add(d.processor);   /* addModule TWICE with the same processor name
-        throws — a power-cycle must re-create the node, never re-register */
+      if (!viaUrl) {
+        if (!d.source) throw new Error('No worklet source provided.');
+        const blob = new Blob([d.source], { type: 'application/javascript' });
+        await mctx.audioWorklet.addModule(URL.createObjectURL(blob));
+      }
+      wlReg.add(d.processor);
     }
-    if(wlNodes[d.mod]){ try{ wlNodes[d.mod].disconnect(); }catch(_){} }
-    if(hooked[d.mod]){ try{ hooked[d.mod].disconnect(); }catch(_){} }
-    const n=new AudioWorkletNode(mctx, d.processor,
-      {outputChannelCount:[2], processorOptions:d.opts||{}});
-    const an=mctx.createAnalyser(); an.fftSize=1024;
-    n.connect(an);                       /* scope tap — dead end, not a path */
-    const gn=mctx.createGain();          /* the seam a stream fades in under */
-    n.connect(gn); gn.connect(mix, 0, CHIDX[d.mod]);
-    wlGain[d.mod]=gn;
-    n.port.onmessage=ev=>{ try{ win.postMessage({src:'srcd-duo',cmd:'wl-msg',
-      mod:d.mod, m:ev.data},'*'); }catch(_){} };
-    wlNodes[d.mod]=n; wlAnal[d.mod]=an; hooked[d.mod]=n;
-    if(running) reconcile();             /* it woke mid-session: stream it at once
-      unless it happens to be the face on show */
-    if(d.mod==='atmos') mix.port.postMessage(['extc', d.lawcap?1:0]);
-    win.postMessage({src:'srcd-duo',cmd:'wl-ready',mod:d.mod,sr:mctx.sampleRate},'*');
-    /* it mounted after the last face switch, so it never heard whether anyone is
-       looking at it. Tell it now, or it draws its scope for nobody, forever. */
-    try{ win.postMessage({src:'srcd-duo',cmd:'face',
-      on:(FACES[face] && FACES[face].mod===d.mod)?1:0},'*'); }catch(_){}
-    $('hint').textContent='⛁ '+String(d.mod).toUpperCase()+' HOSTED IN THE SUBSTRΛTΞ CONTEXT';
-    $('hint').style.opacity=1;
-    setTimeout(()=>$('hint').style.opacity=0,2200);
-  }catch(err){
-    const msg=String(err&&err.message||err);
-    try{ win.postMessage({src:'srcd-duo',cmd:'wl-fail',mod:d.mod,err:msg},'*'); }catch(_){}
-    $('hint').textContent='⚠ '+String(d.mod).toUpperCase()+' worklet mount failed: '+msg;
-    $('hint').style.opacity=1;
+
+    // Clean up existing nodes to prevent resource leaks
+    if (wlNodes[d.mod]) { try { wlNodes[d.mod].disconnect(); } catch (_) { } }
+    if (hooked[d.mod]) { try { hooked[d.mod].disconnect(); } catch (_) { } }
+
+    // Mount the node
+    const n = new AudioWorkletNode(mctx, d.processor, { outputChannelCount: [2], processorOptions: d.opts || {} });
+    const an = mctx.createAnalyser(); 
+    an.fftSize = 1024;
+    n.connect(an);
+    const gn = mctx.createGain();
+    n.connect(gn); 
+    gn.connect(mix, 0, CHIDX[d.mod]);
+    
+    wlGain[d.mod] = gn;
+    n.port.onmessage = ev => { try { win.postMessage({ src: 'srcd-duo', cmd: 'wl-msg', mod: d.mod, m: ev.data }, '*'); } catch (_) { } };
+    
+    wlNodes[d.mod] = n; 
+    wlAnal[d.mod] = an; 
+    hooked[d.mod] = n;
+    
+    // Handshake success
+    win.postMessage({ src: 'srcd-duo', cmd: 'wl-ready', mod: d.mod, sr: mctx.sampleRate }, '*');
+    
+    if (running) reconcile();
+    if (d.mod === 'atmos') mix.port.postMessage(['extc', d.lawcap ? 1 : 0]);
+    
+    updateChassisStatus();
+  } catch (err) {
+    console.error("SUBSTRΛTΞ // MOUNT FAILURE:", d.mod, err);
+    $('hint').textContent = '⚠ CHASSIS MOUNT FAILED: ' + d.mod.toUpperCase();
+    $('hint').style.opacity = 1;
+    setTimeout(() => $('hint').style.opacity = 0, 3500);
+    try { win.postMessage({ src: 'srcd-duo', cmd: 'wl-fail', mod: d.mod, err: err.message }, '*'); } catch (_) { }
   }
 }
 /* SCOPE RELAY — the chassis owns the analysers now, so it ships frames down to
