@@ -1286,9 +1286,18 @@ async function reconcile(){
       }
       if(!FACES[face] || FACES[face].mod===face_) break;   /* stable: done */
     }
-  }catch(err){ hintFlash('⚠ stream: '+(err&&err.message||err)); }
-  swapping=false;
-}
+    } catch (err) {
+    // FORCE FULL ERROR REPORTING
+    const fullErr = err.stack || err.message || String(err);
+    console.error("SUBSTRΛTΞ // MOUNT FAILED:", d.mod, fullErr);
+    
+    // Show the first 40 chars of the actual error to identify the root cause
+    $('hint').textContent = '⚠ FAILED [' + d.mod + ']: ' + (err.message || String(err)).slice(0,40);
+    $('hint').style.opacity = 1;
+    
+    try { win.postMessage({ src: 'srcd-duo', cmd: 'wl-fail', mod: d.mod, err: err.message }, '*'); } catch (_) { }
+  }
+
 function stopStreams(){
   /* NOT an instant kill. src.stop() mid-waveform is a hard chop — and in a
      ring-out capture the tail slot recorded exactly that: the live face rang
